@@ -1,0 +1,140 @@
+
+🎯 BRIEFING DISEÑO – TABLA SEMANAL DE RESPONSABILIDADES (ADOLESCENTE 15 AÑOS – TDAH)
+
+1. Objetivo del diseño
+
+Diseñar una tabla semanal imprimible en A4 horizontal, visualmente atractiva pero muy clara, pensada para un adolescente de 15 años con TDAH.
+
+Debe:
+	•	Ser fácil de leer a 2–3 metros (pegada en nevera)
+	•	No saturar visualmente
+	•	Tener estructura muy clara
+	•	Facilitar el marcado diario (casillas grandes)
+	•	Transmitir sensación de progreso, no castigo
+
+⸻
+
+2. Público objetivo
+	•	Adolescente 15 años
+	•	TDAH → necesita:
+	•	Jerarquía visual clara
+	•	Pocas distracciones
+	•	Texto corto y muy concreto
+	•	Espacios amplios
+	•	Sensación de orden
+
+Evitar:
+	•	Estética infantil
+	•	Exceso de iconos
+	•	Colores estridentes
+	•	Demasiado texto pequeño
+
+⸻
+
+3. Formato
+	•	Tamaño: A4 horizontal
+	•	Márgenes amplios
+	•	Tabla central dominante
+	•	Espacio para nombre y semana arriba
+	•	Espacio inferior para total de puntos
+
+⸻
+
+4. Estructura del contenido
+
+🧠 TAREAS DIARIAS (filas principales)
+	1.	Mostrar resumen de deberes antes de las 16:00
+(Si no hay → escribir “Asignatura: no marcó deberes hoy”)
+	2.	Estudiar / hacer deberes antes de las 20:00
+	3.	Cocina limpia y despejada antes de las 20:00
+	4.	Mochila preparada antes de dormir
+	5.	Escritorio ordenado 5 minutos antes de dormir
+
+⸻
+
+📅 TAREAS SEMANALES
+	6.	Doblar y guardar ropa
+(Lunes, Miércoles y Domingo antes de las 18:00)
+	7.	Poner lavadora y secadora ropa oscura
+(Jueves antes de las 16:00)
+
+⸻
+
+5. Estructura visual de la tabla
+
+Columnas:
+
+| Tarea | L | M | X | J | V | S | D |
+
+Cada día con:
+	•	Casilla grande (mínimo 1.5cm x 1.5cm)
+	•	Espacio cómodo para marcar ✔
+
+Para tareas semanales:
+	•	Dejar casillas solo en los días correspondientes
+	•	El resto en gris claro o vacío
+
+⸻
+
+6. Sistema de puntos visual
+
+En la parte inferior incluir:
+
+🔥 PUNTOS DE LA SEMANA
+
+Espacio para:
+	•	Total posible: 30 puntos
+	•	Puntos conseguidos: ______
+
+Escalera visual tipo barra de progreso:
+	•	20 puntos → Nivel 1
+	•	24 puntos → Nivel 2
+	•	28 puntos → Nivel 3
+
+Debe verse motivador, no punitivo.
+
+⸻
+
+7. Estilo visual
+
+Estética recomendada:
+	•	Minimalista moderna
+	•	Inspiración tipo dashboard limpio
+	•	Colores neutros + 1 color acento (azul oscuro, verde petróleo o naranja suave)
+	•	Tipografía clara y sans-serif
+	•	Buen contraste
+	•	Mucho espacio en blanco
+
+Evitar:
+	•	Comic Sans
+	•	Estética infantil
+	•	Emojis excesivos
+	•	Fondos recargados
+
+⸻
+
+8. Elementos opcionales
+	•	Iconos discretos junto a cada tarea (libro, cocina, mochila)
+	•	Barra de progreso semanal tipo “XP”
+	•	Espacio para firma semanal (padres / hijo)
+
+⸻
+
+9. Sensación que debe transmitir
+	•	Claridad
+	•	Control
+	•	Progreso
+	•	Madurez
+	•	Confianza
+
+NO debe parecer:
+	•	Tabla de castigo
+	•	Cartel escolar infantil
+	•	Lista militar rígida
+
+⸻
+
+10. Entregables
+	•	PDF listo para imprimir
+	•	Versión editable
+	•	Versión en blanco y negro (por si se imprime sin color)
