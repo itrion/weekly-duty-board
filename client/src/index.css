@@ -67,11 +67,11 @@
 @media print {
   @page {
     size: A4 landscape;
-    margin: 0.5cm;
+    margin: 1cm;
   }
 
   body {
-    background: white;
+    background: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -85,6 +85,8 @@
   * {
     box-shadow: none !important;
     text-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Force table layout */
@@ -95,15 +97,5 @@
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
-  }
-  
-  /* Ensure grid colors appear */
-  .bg-primary {
-    background-color: #006D77 !important;
-    color: white !important;
-  }
-  
-  .bg-secondary {
-    background-color: #E0F2F1 !important;
   }
 }

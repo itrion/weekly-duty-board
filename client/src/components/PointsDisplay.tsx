@@ -61,7 +61,7 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
         
         {/* Progress Fill */}
         <div 
-          className="absolute top-1/2 left-0 h-3 bg-gradient-to-r from-primary/60 to-primary rounded-full -z-10 transition-all duration-1000 ease-out print:bg-black"
+          className="absolute top-1/2 left-0 h-3 bg-gradient-to-r from-primary/60 to-primary rounded-full -z-10 transition-all duration-1000 ease-out print:bg-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]"
           style={{ width: `${getProgress(LEVEL_3)}%` }}
         ></div>
 
@@ -76,7 +76,7 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
           <div className="flex flex-col items-center gap-2 relative">
             <div className={cn(
               "w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-10 bg-white",
-              totalPoints >= LEVEL_1 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20 print:border-black print:text-black" : "border-slate-200 text-slate-300"
+              totalPoints >= LEVEL_1 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20 print:border-black print:text-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]" : "border-slate-200 text-slate-300"
             )}>
               <Star size={16} fill={totalPoints >= LEVEL_1 ? "currentColor" : "none"} />
             </div>
@@ -90,7 +90,7 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
           <div className="flex flex-col items-center gap-2 relative">
             <div className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-10 bg-white",
-              totalPoints >= LEVEL_2 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20 print:border-black print:text-black" : "border-slate-200 text-slate-300"
+              totalPoints >= LEVEL_2 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20 print:border-black print:text-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]" : "border-slate-200 text-slate-300"
             )}>
               <TrendingUp size={20} />
             </div>
@@ -104,7 +104,7 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
           <div className="flex flex-col items-center gap-2 relative">
             <div className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-10 bg-white",
-              totalPoints >= LEVEL_3 ? "border-yellow-500 text-yellow-500 scale-110 shadow-xl shadow-yellow-500/20 print:border-black print:text-black" : "border-slate-200 text-slate-300"
+              totalPoints >= LEVEL_3 ? "border-yellow-500 text-yellow-500 scale-110 shadow-xl shadow-yellow-500/20 print:border-black print:text-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]" : "border-slate-200 text-slate-300"
             )}>
               <Trophy size={24} fill={totalPoints >= LEVEL_3 ? "currentColor" : "none"} />
             </div>

@@ -56,9 +56,9 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
   const weeklyTasks = tasks.filter(t => t.type === 'weekly');
 
   return (
-    <div className="w-full bg-white rounded-xl shadow-xl overflow-hidden border border-border/50 print:shadow-none print:rounded-none print:border-2 print:border-black">
+    <div className="w-full bg-white rounded-xl shadow-xl overflow-hidden border border-border/50 print:shadow-none print:rounded-none print:border-2 print:border-black print:overflow-visible">
       {/* Table Header */}
-      <div className="grid grid-cols-[300px_repeat(7,1fr)] bg-primary text-primary-foreground print:bg-black print:text-white">
+      <div className="grid grid-cols-[300px_repeat(7,1fr)] bg-primary text-primary-foreground print:bg-black print:text-white print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]">
         <div className="p-4 font-display font-bold text-lg tracking-wider flex items-center">
           TAREA
         </div>
@@ -112,9 +112,9 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
                     className={cn(
                       "w-8 h-8 md:w-10 md:h-10 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
                       "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2",
-                      !required && "bg-slate-100 border-slate-200 cursor-not-allowed opacity-50 print:bg-gray-300",
+                      !required && "bg-slate-100 border-slate-200 cursor-not-allowed opacity-50 print:bg-gray-200 print:opacity-100 print:border-gray-300",
                       required && !checked && "bg-white border-slate-300 hover:border-primary hover:bg-primary/5 cursor-pointer print:border-black",
-                      required && checked && "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-100 checkbox-checked print:bg-black print:border-black print:text-white"
+                      required && checked && "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-100 checkbox-checked print:bg-black print:border-black print:text-white print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]"
                     )}
                   >
                     {checked && <Check strokeWidth={3} className="w-5 h-5 md:w-6 md:h-6" />}
@@ -170,7 +170,7 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
                       "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2",
                       !required && "bg-slate-100 border-slate-200 opacity-30 cursor-default print:bg-gray-300 print:opacity-50",
                       required && !checked && "bg-white border-slate-300 hover:border-primary hover:bg-primary/5 cursor-pointer print:border-black",
-                      required && checked && "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-100 checkbox-checked print:bg-black print:border-black print:text-white"
+                      required && checked && "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-100 checkbox-checked print:bg-black print:border-black print:text-white print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]"
                     )}
                   >
                     {checked && <Check strokeWidth={3} className="w-5 h-5 md:w-6 md:h-6" />}
