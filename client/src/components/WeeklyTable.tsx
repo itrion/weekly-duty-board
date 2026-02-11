@@ -1,7 +1,17 @@
 import { Task, Completion } from "@shared/schema";
 import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, Utensils, BookOpen, Shirt, Backpack, BedDouble, Trash2, Dog, Sparkles } from "lucide-react";
+import { 
+  Check, 
+  Utensils, 
+  BookOpen, 
+  Shirt, 
+  Backpack, 
+  Monitor, 
+  ClipboardList, 
+  WashingMachine,
+  Sparkles 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WeeklyTableProps {
@@ -16,14 +26,14 @@ const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "
 const DAY_KEYS = [1, 2, 3, 4, 5, 6, 0]; // Monday=1... Sunday=0 for date-fns
 
 const IconMap: Record<string, any> = {
-  Utensils,
-  BookOpen,
-  Shirt,
-  Backpack,
-  BedDouble,
-  Trash2,
-  Dog,
-  Sparkles
+  "utensils": Utensils,
+  "book-open": BookOpen,
+  "shirt": Shirt,
+  "backpack": Backpack,
+  "monitor": Monitor,
+  "clipboard-list": ClipboardList,
+  "washing-machine": WashingMachine,
+  "sparkles": Sparkles
 };
 
 export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPending }: WeeklyTableProps) {
