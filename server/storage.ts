@@ -1,38 +1,60 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
 
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import {
+  tasks,
+  completions,
+  type Task,
+  type InsertTask,
+  type Completion,
+  type InsertCompletion
+} from "@shared/schema";
+import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getTasks(): Promise<Task[]>;
+  seedTasks(initialTasks: InsertTask[]): Promise<Task[]>;
+  getCompletions(startDate: string, endDate: string): Promise<Completion[]>;
+  toggleCompletion(data: InsertCompletion): Promise<Completion>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getTasks(): Promise<Task[]> {
+    return await db.select().from(tasks).orderBy(tasks.id);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async seedTasks(initialTasks: InsertTask[]): Promise<Task[]> {
+    await db.delete(tasks);
+    return await db.insert(tasks).values(initialTasks).returning();
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getCompletions(startDate: string, endDate: string): Promise<Completion[]> {
+    return await db.select().from(completions)
+      .where(and(
+        gte(completions.date, startDate),
+        lte(completions.date, endDate)
+      ));
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async toggleCompletion(data: InsertCompletion): Promise<Completion> {
+    const existing = await db.select().from(completions)
+      .where(and(
+        eq(completions.taskId, data.taskId),
+        eq(completions.date, data.date)
+      ));
+
+    if (existing.length > 0) {
+      const [updated] = await db.update(completions)
+        .set({ completed: data.completed })
+        .where(eq(completions.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(completions)
+        .values(data)
+        .returning();
+      return created;
+    }
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
