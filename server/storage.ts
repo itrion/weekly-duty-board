@@ -4,7 +4,6 @@ import {
   tasks,
   completions,
   type Task,
-  type InsertTask,
   type Completion,
   type InsertCompletion
 } from "@shared/schema";
@@ -12,7 +11,6 @@ import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   getTasks(): Promise<Task[]>;
-  seedTasks(initialTasks: InsertTask[]): Promise<Task[]>;
   getCompletions(startDate: string, endDate: string): Promise<Completion[]>;
   toggleCompletion(data: InsertCompletion): Promise<Completion>;
 }
@@ -20,11 +18,6 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async getTasks(): Promise<Task[]> {
     return await db.select().from(tasks).orderBy(tasks.id);
-  }
-
-  async seedTasks(initialTasks: InsertTask[]): Promise<Task[]> {
-    await db.delete(tasks);
-    return await db.insert(tasks).values(initialTasks).returning();
   }
 
   async getCompletions(startDate: string, endDate: string): Promise<Completion[]> {

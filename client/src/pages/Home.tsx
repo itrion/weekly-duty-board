@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useTasks, useCompletions, useToggleCompletion, useResetTasks } from "@/hooks/use-tasks";
+import { useTasks, useCompletions, useToggleCompletion } from "@/hooks/use-tasks";
 import { WeeklyTable } from "@/components/WeeklyTable";
 import { PointsDisplay } from "@/components/PointsDisplay";
 import { Button } from "@/components/ui/button";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { es } from "date-fns/locale";
-import { Printer, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Printer, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -20,7 +20,6 @@ export default function Home() {
   const { data: tasks, isLoading: tasksLoading } = useTasks();
   const { data: completions, isLoading: completionsLoading } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
-  const { mutate: resetTasks, isPending: isResetting } = useResetTasks();
 
   const handlePrint = () => {
     window.print();
@@ -36,12 +35,6 @@ export default function Home() {
 
   const handleToggle = (taskId: number, date: string, completed: boolean) => {
     toggleTask({ taskId, date, completed: !completed });
-  };
-
-  const handleReset = () => {
-    if (confirm("Are you sure you want to reset tasks to defaults? This will delete custom tasks.")) {
-      resetTasks();
-    }
   };
 
   if (tasksLoading) {
@@ -60,9 +53,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <h2 className="text-2xl font-bold text-foreground mb-4">No hay tareas configuradas</h2>
-        <Button onClick={() => resetTasks()} disabled={isResetting} className="bg-primary hover:bg-primary/90">
-          {isResetting ? "Generando..." : "Inicializar Tareas por Defecto"}
-        </Button>
+        <p className="text-muted-foreground">La base de datos no tiene tareas cargadas.</p>
       </div>
     );
   }
@@ -104,11 +95,6 @@ export default function Home() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-
-            {/* Admin/Debug: Reset Tasks */}
-            {/* <Button variant="outline" size="icon" onClick={handleReset} title="Reset Default Tasks">
-              <RefreshCw className="h-4 w-4" />
-            </Button> */}
 
             <Button onClick={handlePrint} className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all">
               <Printer className="mr-2 h-4 w-4" />

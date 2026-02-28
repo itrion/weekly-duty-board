@@ -1,6 +1,6 @@
 
 import { z } from 'zod';
-import { insertTaskSchema, tasks, completions } from './schema';
+import { tasks, completions } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -24,13 +24,6 @@ export const api = {
         200: z.array(z.custom<typeof tasks.$inferSelect>()),
       },
     },
-    reset: {
-      method: 'POST' as const,
-      path: '/api/tasks/reset' as const, // Seed/Reset tasks
-      responses: {
-        201: z.array(z.custom<typeof tasks.$inferSelect>()),
-      },
-    }
   },
   completions: {
     list: {

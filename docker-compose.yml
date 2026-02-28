@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: weekly-duty-board-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: weekly_duty_board
+      POSTGRES_USER: weekly_duty_user
+      POSTGRES_PASSWORD: weekly_duty_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weekly_duty_user -d weekly_duty_board"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: node:20-bookworm-slim
+    container_name: weekly-duty-board-app
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://weekly_duty_user:weekly_duty_password@db:5432/weekly_duty_board
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${APP_PORT:-5001}:5000"
+    volumes:
+      - ./:/app
+      - app_node_modules:/app/node_modules
+    command: >
+      sh -c "npm install && npm run dev"
+
+volumes:
+  postgres_data:
+  app_node_modules:

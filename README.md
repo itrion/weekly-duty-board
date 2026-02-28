@@ -9,8 +9,7 @@ Key features:
 - Points/gamification system with progress levels
 - Week navigation (previous/next week)
 - Print-optimized layout (A4 landscape)
-- Auto-seeding of default tasks if the database is empty
-- Task reset functionality
+- Docker-based Postgres setup with initial task seed
 
 ## User Preferences
 
@@ -49,8 +48,7 @@ Preferred communication style: Simple, everyday language.
 ### API Endpoints
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/tasks` | List all tasks (auto-seeds if empty) |
-| POST | `/api/tasks/reset` | Reset tasks to default seed data |
+| GET | `/api/tasks` | List all tasks |
 | GET | `/api/completions?startDate=&endDate=` | Get completions for date range |
 | POST | `/api/completions` | Toggle a task's completion status |
 
@@ -78,7 +76,7 @@ shared/           → Code shared between client and server
 ### Key Design Decisions
 - **Shared schema and routes**: The `shared/` directory contains both the database schema and API route contracts, ensuring type safety across the full stack
 - **Storage interface pattern**: `IStorage` interface in `storage.ts` abstracts database operations, making it possible to swap implementations
-- **Auto-seeding**: Tasks are automatically seeded on first GET request if the database is empty
+- **Seeding source**: Default tasks are seeded at database initialization via Docker SQL init scripts
 - **Date strings**: Completions use `YYYY-MM-DD` string format for dates rather than timestamp columns, simplifying day-level queries
 - **Print support**: CSS `@media print` rules are critical — the app is designed to be printed and posted on a fridge
 
@@ -88,3 +86,24 @@ shared/           → Code shared between client and server
 - **Google Fonts**: Inter, Outfit, DM Sans, Fira Code, Geist Mono, Architects Daughter loaded via CDN
 - **No authentication**: The app currently has no auth system — it's a simple family tool
 - **Replit plugins**: `@replit/vite-plugin-runtime-error-modal`, `@replit/vite-plugin-cartographer`, `@replit/vite-plugin-dev-banner` used in development
+
+## Local Postgres with Docker Compose
+
+This repo includes a `docker-compose.yml` that starts PostgreSQL and seeds the default tasks.
+
+1. Copy environment file:
+   - `cp .env.example .env`
+2. Start DB:
+   - `npm run db:up`
+3. Run app:
+   - `npm run dev`
+
+Or run both DB + app in Docker (code is bind-mounted, no image build step):
+- `docker compose up -d db app`
+- Open `http://localhost:5001`
+
+Seed SQL runs automatically on first container initialization from:
+- `docker/postgres/init/01-init.sql`
+
+If you need to re-run the init seed from scratch, remove the volume and recreate:
+- `npm run db:reset`

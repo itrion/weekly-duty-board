@@ -13,23 +13,6 @@ export function useTasks() {
   });
 }
 
-export function useResetTasks() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const res = await fetch(api.tasks.reset.path, {
-        method: api.tasks.reset.method,
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to reset tasks");
-      return api.tasks.reset.responses[201].parse(await res.json());
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
-    },
-  });
-}
-
 export function useCompletions(startDate: string, endDate: string) {
   return useQuery({
     queryKey: [api.completions.list.path, startDate, endDate],
