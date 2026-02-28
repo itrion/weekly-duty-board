@@ -22,11 +22,20 @@ export const completions = pgTable("completions", {
 
 export const insertTaskSchema = createInsertSchema(tasks);
 export const insertCompletionSchema = createInsertSchema(completions);
+export const updateTaskSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  timeInfo: z.string().trim().max(120).nullable(),
+  type: z.enum(["daily", "weekly"]),
+  requiredDays: z.array(z.number().int().min(0).max(6)).min(1),
+  points: z.number().int().min(1).max(20),
+  icon: z.string().trim().min(1).max(64).nullable(),
+});
 
 export type Task = typeof tasks.$inferSelect;
 export type Completion = typeof completions.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type InsertCompletion = z.infer<typeof insertCompletionSchema>;
+export type UpdateTaskRequest = z.infer<typeof updateTaskSchema>;
 
 // Request types
 export type ToggleTaskRequest = {

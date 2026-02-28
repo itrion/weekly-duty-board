@@ -15,6 +15,29 @@ export async function registerRoutes(
     res.json(tasks);
   });
 
+  app.patch(api.tasks.update.path, async (req, res) => {
+    const taskId = Number(req.params.id);
+    if (!Number.isInteger(taskId) || taskId < 1) {
+      return res.status(400).json({ message: "Invalid task id" });
+    }
+
+    try {
+      const input = api.tasks.update.input.parse(req.body);
+      const updatedTask = await storage.updateTask(taskId, input);
+
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json(updatedTask);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors });
+      }
+      throw err;
+    }
+  });
+
   app.get(api.completions.list.path, async (req, res) => {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {

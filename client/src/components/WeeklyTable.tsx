@@ -1,42 +1,23 @@
 import { Task, Completion } from "@shared/schema";
-import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
+import { format, startOfWeek, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { 
-  Check, 
-  Utensils, 
-  BookOpen, 
-  Shirt, 
-  Backpack, 
-  Monitor, 
-  ClipboardList, 
-  WashingMachine,
-  Sparkles 
-} from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getTaskIcon } from "@/lib/task-icons";
 
 interface WeeklyTableProps {
   tasks: Task[];
   completions: Completion[];
   currentDate: Date;
   onToggle: (taskId: number, date: string, currentStatus: boolean) => void;
+  onEditTask: (task: Task) => void;
   isPending: boolean;
 }
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const DAY_KEYS = [1, 2, 3, 4, 5, 6, 0]; // Monday=1... Sunday=0 for date-fns
 
-const IconMap: Record<string, any> = {
-  "utensils": Utensils,
-  "book-open": BookOpen,
-  "shirt": Shirt,
-  "backpack": Backpack,
-  "monitor": Monitor,
-  "clipboard-list": ClipboardList,
-  "washing-machine": WashingMachine,
-  "sparkles": Sparkles
-};
-
-export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPending }: WeeklyTableProps) {
+export function WeeklyTable({ tasks, completions, currentDate, onToggle, onEditTask, isPending }: WeeklyTableProps) {
   // Calculate week dates
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
@@ -78,7 +59,7 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
       </div>
 
       {dailyTasks.map((task, idx) => {
-        const Icon = task.icon ? IconMap[task.icon] : Sparkles;
+        const Icon = getTaskIcon(task.icon);
         return (
           <div 
             key={task.id} 
@@ -87,7 +68,11 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
               idx === dailyTasks.length - 1 && "border-b-2 border-primary/20 print:border-b-black"
             )}
           >
-            <div className="p-4 flex items-center gap-3 border-r border-border/60 print:border-black">
+            <button
+              type="button"
+              onClick={() => onEditTask(task)}
+              className="p-4 flex w-full items-center gap-3 border-r border-border/60 text-left transition-colors hover:bg-primary/5 print:border-black print:hover:bg-transparent"
+            >
               <div className="p-2 rounded-full bg-primary/10 text-primary print:hidden">
                 <Icon size={18} />
               </div>
@@ -97,7 +82,7 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
                   <div className="text-xs text-muted-foreground mt-0.5 font-medium">{task.timeInfo}</div>
                 )}
               </div>
-            </div>
+            </button>
             
             {weekDates.map((date) => {
               const dateStr = format(date, 'yyyy-MM-dd');
@@ -134,7 +119,7 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
       </div>
 
       {weeklyTasks.map((task, idx) => {
-        const Icon = task.icon ? IconMap[task.icon] : Sparkles;
+        const Icon = getTaskIcon(task.icon);
         return (
           <div 
             key={task.id} 
@@ -143,7 +128,11 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
               idx === weeklyTasks.length - 1 && "border-b-0"
             )}
           >
-            <div className="p-4 flex items-center gap-3 border-r border-border/60 print:border-black">
+            <button
+              type="button"
+              onClick={() => onEditTask(task)}
+              className="p-4 flex w-full items-center gap-3 border-r border-border/60 text-left transition-colors hover:bg-primary/5 print:border-black print:hover:bg-transparent"
+            >
               <div className="p-2 rounded-full bg-orange-100 text-orange-600 print:hidden">
                 <Icon size={18} />
               </div>
@@ -153,7 +142,7 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, isPendi
                   <div className="text-xs text-muted-foreground mt-0.5 font-medium">{task.timeInfo}</div>
                 )}
               </div>
-            </div>
+            </button>
             
             {weekDates.map((date) => {
               const dateStr = format(date, 'yyyy-MM-dd');

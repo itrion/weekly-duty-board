@@ -5,12 +5,14 @@ import {
   completions,
   type Task,
   type Completion,
-  type InsertCompletion
+  type InsertCompletion,
+  type UpdateTaskRequest,
 } from "@shared/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   getTasks(): Promise<Task[]>;
+  updateTask(taskId: number, data: UpdateTaskRequest): Promise<Task | null>;
   getCompletions(startDate: string, endDate: string): Promise<Completion[]>;
   toggleCompletion(data: InsertCompletion): Promise<Completion>;
 }
@@ -18,6 +20,15 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async getTasks(): Promise<Task[]> {
     return await db.select().from(tasks).orderBy(tasks.id);
+  }
+
+  async updateTask(taskId: number, data: UpdateTaskRequest): Promise<Task | null> {
+    const [updated] = await db.update(tasks)
+      .set(data)
+      .where(eq(tasks.id, taskId))
+      .returning();
+
+    return updated ?? null;
   }
 
   async getCompletions(startDate: string, endDate: string): Promise<Completion[]> {

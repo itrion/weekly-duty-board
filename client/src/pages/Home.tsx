@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { useTasks, useCompletions, useToggleCompletion } from "@/hooks/use-tasks";
+import { useTasks, useCompletions, useToggleCompletion, useUpdateTask } from "@/hooks/use-tasks";
 import { WeeklyTable } from "@/components/WeeklyTable";
 import { PointsDisplay } from "@/components/PointsDisplay";
+import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { Button } from "@/components/ui/button";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { Printer, ChevronLeft, ChevronRight } from "lucide-react";
+import type { Task, UpdateTaskRequest } from "@shared/schema";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   
   // Date calculations
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -20,6 +24,7 @@ export default function Home() {
   const { data: tasks, isLoading: tasksLoading } = useTasks();
   const { data: completions, isLoading: completionsLoading } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
+  const { mutateAsync: updateTask, isPending: isUpdatingTask } = useUpdateTask();
 
   const handlePrint = () => {
     window.print();
@@ -35,6 +40,16 @@ export default function Home() {
 
   const handleToggle = (taskId: number, date: string, completed: boolean) => {
     toggleTask({ taskId, date, completed: !completed });
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsEditorOpen(true);
+  };
+
+  const handleSaveTask = async (taskId: number, data: UpdateTaskRequest) => {
+    await updateTask({ taskId, data });
+    setIsEditorOpen(false);
   };
 
   if (tasksLoading) {
@@ -110,6 +125,7 @@ export default function Home() {
             completions={completions || []} 
             currentDate={currentDate} 
             onToggle={handleToggle}
+            onEditTask={handleEditTask}
             isPending={isToggling}
           />
           
@@ -124,6 +140,17 @@ export default function Home() {
           <p>© {new Date().getFullYear()} Sistema de Responsabilidades</p>
         </footer>
       </div>
+
+      <TaskEditorSheet
+        open={isEditorOpen}
+        task={editingTask}
+        isSaving={isUpdatingTask}
+        onOpenChange={(open) => {
+          setIsEditorOpen(open);
+          if (!open) setEditingTask(null);
+        }}
+        onSave={handleSaveTask}
+      />
     </div>
   );
 }

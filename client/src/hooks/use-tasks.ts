@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import type { Task, Completion, ToggleTaskRequest } from "@shared/schema";
+import type { ToggleTaskRequest, UpdateTaskRequest } from "@shared/schema";
 
 export function useTasks() {
   return useQuery({
@@ -23,6 +23,28 @@ export function useCompletions(startDate: string, endDate: string) {
       return api.completions.list.responses[200].parse(await res.json());
     },
     enabled: !!startDate && !!endDate,
+  });
+}
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ taskId, data }: { taskId: number; data: UpdateTaskRequest }) => {
+      const validated = api.tasks.update.input.parse(data);
+      const url = buildUrl(api.tasks.update.path, { id: taskId });
+      const res = await fetch(url, {
+        method: api.tasks.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update task");
+      return api.tasks.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
+    },
   });
 }
 
