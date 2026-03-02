@@ -67,11 +67,12 @@
 @media print {
   @page {
     size: A4 landscape;
-    margin: 1cm;
+    margin: 10mm;
   }
 
+  html,
   body {
-    background: white !important;
+    background: hsl(var(--background)) !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -81,21 +82,23 @@
     display: none !important;
   }
 
-  /* Ensure shadows and backgrounds print */
+  /* Keep app colors when printing */
   * {
-    box-shadow: none !important;
-    text-shadow: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Force table layout */
+  /* Expand main container for paper */
   .print-container {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
+  }
+
+  /* Keep sections together across page breaks */
+  .print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

@@ -37,38 +37,38 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
   };
 
   return (
-    <div className="mt-6 bg-white rounded-xl shadow-lg border border-border/50 p-6 print:border-2 print:border-black print:shadow-none print:mt-4">
+    <div className="mt-6 bg-white rounded-xl shadow-lg border border-border/50 p-6 print:mt-4">
       <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-yellow-100 rounded-full text-yellow-600 print:hidden">
+          <div className="p-3 bg-yellow-100 rounded-full text-yellow-600">
             <Trophy size={24} />
           </div>
           <div>
             <h3 className="text-lg font-display font-bold text-foreground uppercase tracking-wider">Puntos de la Semana</h3>
-            <p className="text-sm text-muted-foreground print:hidden">Completa tareas para desbloquear recompensas</p>
+            <p className="text-sm text-muted-foreground">Completa tareas para desbloquear recompensas</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-border print:border-black">
-          <span className="text-3xl font-bold text-primary print:text-black">{totalPoints}</span>
-          <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider print:text-black">Puntos Totales</span>
+        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-border">
+          <span className="text-3xl font-bold text-primary">{totalPoints}</span>
+          <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Puntos Totales</span>
         </div>
       </div>
 
       {/* Progress Staircase Visual */}
       <div className="relative pt-6 pb-2 px-2">
-        <div className="absolute top-1/2 left-0 w-full h-3 bg-slate-100 rounded-full -z-10 print:bg-gray-200"></div>
+        <div className="absolute top-1/2 left-0 w-full h-3 bg-slate-100 rounded-full -z-10"></div>
         
         {/* Progress Fill */}
         <div 
-          className="absolute top-1/2 left-0 h-3 bg-gradient-to-r from-primary/60 to-primary rounded-full -z-10 transition-all duration-1000 ease-out print:bg-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]"
+          className="absolute top-1/2 left-0 h-3 bg-gradient-to-r from-primary/60 to-primary rounded-full -z-10 transition-all duration-1000 ease-out"
           style={{ width: `${getProgress(LEVEL_3)}%` }}
         ></div>
 
         <div className="flex justify-between relative">
           {/* Start */}
           <div className="flex flex-col items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-slate-300 print:bg-black"></div>
+            <div className="w-4 h-4 rounded-full bg-slate-300"></div>
             <span className="text-xs font-medium text-slate-400">0</span>
           </div>
 
@@ -76,7 +76,7 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
           <div className="flex flex-col items-center gap-2 relative">
             <div className={cn(
               "w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-10 bg-white",
-              totalPoints >= LEVEL_1 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20 print:border-black print:text-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]" : "border-slate-200 text-slate-300"
+              totalPoints >= LEVEL_1 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20" : "border-slate-200 text-slate-300"
             )}>
               <Star size={16} fill={totalPoints >= LEVEL_1 ? "currentColor" : "none"} />
             </div>
@@ -90,7 +90,7 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
           <div className="flex flex-col items-center gap-2 relative">
             <div className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-10 bg-white",
-              totalPoints >= LEVEL_2 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20 print:border-black print:text-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]" : "border-slate-200 text-slate-300"
+              totalPoints >= LEVEL_2 ? "border-primary text-primary scale-110 shadow-lg shadow-primary/20" : "border-slate-200 text-slate-300"
             )}>
               <TrendingUp size={20} />
             </div>
@@ -104,12 +104,12 @@ export function PointsDisplay({ tasks, completions, currentDate }: PointsDisplay
           <div className="flex flex-col items-center gap-2 relative">
             <div className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-10 bg-white",
-              totalPoints >= LEVEL_3 ? "border-yellow-500 text-yellow-500 scale-110 shadow-xl shadow-yellow-500/20 print:border-black print:text-black print:[color-adjust:exact] print:[-webkit-print-color-adjust:exact]" : "border-slate-200 text-slate-300"
+              totalPoints >= LEVEL_3 ? "border-yellow-500 text-yellow-500 scale-110 shadow-xl shadow-yellow-500/20" : "border-slate-200 text-slate-300"
             )}>
               <Trophy size={24} fill={totalPoints >= LEVEL_3 ? "currentColor" : "none"} />
             </div>
             <div className="text-center">
-              <span className="block text-xs font-bold text-yellow-600 print:text-black">MAXIMO!</span>
+              <span className="block text-xs font-bold text-yellow-600">MAXIMO!</span>
               <span className="text-xs text-muted-foreground">{LEVEL_3} pts</span>
             </div>
           </div>

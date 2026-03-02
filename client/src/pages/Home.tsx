@@ -74,25 +74,25 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 print:bg-white text-slate-900 pb-12 print:pb-0">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 print:p-0 print:max-w-none">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 print:pb-0">
+      <div className="print-container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 print:max-w-none print:pt-0">
         
         {/* Header Section */}
         <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 print:mb-4">
           <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2 print:text-black print:text-2xl uppercase tracking-wider">
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2 print:text-2xl uppercase tracking-wider">
               Tabla Semanal de Responsabilidades
             </h1>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-12 text-sm md:text-base">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-muted-foreground uppercase tracking-widest print:text-black">Semana:</span>
-                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[150px] font-medium print:border-black">
+                <span className="font-bold text-muted-foreground uppercase tracking-widest">Semana:</span>
+                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[150px] font-medium">
                   {format(weekStart, "d MMM", { locale: es })} - {format(weekEnd, "d MMM", { locale: es })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-muted-foreground uppercase tracking-widest print:text-black">Nombre:</span>
-                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[200px] print:border-black"></span>
+                <span className="font-bold text-muted-foreground uppercase tracking-widest">Nombre:</span>
+                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[200px]"></span>
               </div>
             </div>
           </div>
@@ -120,20 +120,24 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="space-y-6 print:space-y-4">
-          <WeeklyTable 
-            tasks={tasks} 
-            completions={completions || []} 
-            currentDate={currentDate} 
-            onToggle={handleToggle}
-            onEditTask={handleEditTask}
-            isPending={isToggling}
-          />
+          <section className="print-avoid-break">
+            <WeeklyTable 
+              tasks={tasks} 
+              completions={completions || []} 
+              currentDate={currentDate} 
+              onToggle={handleToggle}
+              onEditTask={handleEditTask}
+              isPending={isToggling}
+            />
+          </section>
           
-          <PointsDisplay 
-            tasks={tasks} 
-            completions={completions || []} 
-            currentDate={currentDate} 
-          />
+          <section className="print-avoid-break">
+            <PointsDisplay 
+              tasks={tasks} 
+              completions={completions || []} 
+              currentDate={currentDate} 
+            />
+          </section>
         </main>
         
         <footer className="mt-12 text-center text-sm text-muted-foreground print:hidden">
