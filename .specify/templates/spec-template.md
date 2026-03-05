@@ -95,6 +95,19 @@
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
+### Constitution Alignment *(mandatory)*
+
+- **CA-001 Contract Impact**: Specify whether shared API/data contracts are affected
+  (`shared/routes.ts`, `shared/schema.ts`) and what must stay synchronized.
+- **CA-002 Print and Language Impact**: Specify A4 landscape print impact and
+  confirm user-facing language expectations.
+- **CA-003 Validation Boundaries**: Specify which inputs are validated and expected
+  error behavior for invalid data.
+- **CA-004 Data Integrity**: Specify date handling, persistence consistency rules,
+  and any DB migration/reset implications.
+- **CA-005 Verification Evidence**: Define required checks (typecheck, API/UI/print,
+  and manual steps where automation is absent).
+
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]

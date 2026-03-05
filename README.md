@@ -15,6 +15,14 @@ Key features:
 
 Preferred communication style: Simple, everyday language.
 
+## Development Governance
+
+- Project constitution: `.specify/memory/constitution.md`
+- All feature plans/specs/tasks must satisfy constitution gates for shared contracts,
+  print + Spanish UX, boundary validation, data integrity, and verification evidence.
+- Minimum verification before merge: `npm run check` plus documented manual checks
+  for impacted API/UI/print flows.
+
 ## System Architecture
 
 ### Frontend

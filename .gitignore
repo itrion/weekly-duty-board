@@ -5,3 +5,11 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .env
+
+# Local environment files (keep template committed)
+.env.*
+!.env.example
+
+# Local Codex runtime/state (contains auth and session data)
+.codex/
+!.codex/prompts

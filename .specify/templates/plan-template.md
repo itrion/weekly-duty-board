@@ -31,7 +31,18 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Contract-First Gate**: If API/data behavior changes, plan MUST identify updates
+  to `shared/routes.ts` and/or `shared/schema.ts` and define how client/server stay
+  synchronized.
+- **Print + Language Gate**: If UI behavior changes, plan MUST state impact on A4
+  landscape print layout and confirm user-facing copy remains Spanish unless
+  requirement says otherwise.
+- **Validation Gate**: Plan MUST define boundary validation for inputs (params, body,
+  query) and expected invalid-input handling.
+- **Data Integrity Gate**: Plan MUST document date/data consistency rules and any
+  DB reset/migration implications for local Postgres workflows.
+- **Verification Gate**: Plan MUST list verification evidence: `npm run check` plus
+  relevant API/UI/print checks (automated and/or manual).
 
 ## Project Structure
 
