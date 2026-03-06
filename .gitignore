@@ -11,5 +11,5 @@ vite.config.ts.*
 !.env.example
 
 # Local Codex runtime/state (contains auth and session data)
-.codex/
+.codex
 !.codex/prompts

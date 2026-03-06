@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Weekly Duty Board Multi-Kid API Contract
+  version: 0.1.0
+  description: Contract for kid management and kid-task assignment.
+paths:
+  /api/kids:
+    get:
+      summary: List kids
+      responses:
+        '200':
+          description: Kids list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Kid'
+    post:
+      summary: Create kid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKidInput'
+      responses:
+        '201':
+          description: Kid created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Kid'
+        '400':
+          description: Invalid input
+
+  /api/kids/{kidId}:
+    patch:
+      summary: Update kid
+      parameters:
+        - name: kidId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKidInput'
+      responses:
+        '200':
+          description: Kid updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Kid'
+        '400':
+          description: Invalid input
+        '404':
+          description: Kid not found
+
+    delete:
+      summary: Remove kid
+      parameters:
+        - name: kidId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Kid removed
+        '404':
+          description: Kid not found
+
+  /api/tasks:
+    get:
+      summary: List tasks optionally filtered by kid
+      parameters:
+        - name: kidId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+  /api/tasks/{taskId}/assignments:
+    put:
+      summary: Replace assignment set for a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceAssignmentsInput'
+      responses:
+        '200':
+          description: Assignment update result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentResult'
+        '400':
+          description: Invalid input
+        '404':
+          description: Task not found
+
+components:
+  schemas:
+    Kid:
+      type: object
+      required: [id, name, active]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+
+    CreateKidInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+
+    UpdateKidInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        active:
+          type: boolean
+
+    Task:
+      type: object
+      required: [id, title, type, requiredDays, points]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        type:
+          type: string
+          enum: [daily, weekly]
+        requiredDays:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        points:
+          type: integer
+
+    ReplaceAssignmentsInput:
+      type: object
+      required: [kidIds]
+      properties:
+        kidIds:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+
+    AssignmentResult:
+      type: object
+      required: [taskId, kidIds]
+      properties:
+        taskId:
+          type: integer
+        kidIds:
+          type: array
+          items:
+            type: integer
