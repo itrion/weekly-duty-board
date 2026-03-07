@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { Task, UpdateTaskRequest } from "@shared/schema";
+import type { Kid, Task, UpdateTaskRequest } from "@shared/schema";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,9 +37,14 @@ const DAY_OPTIONS = [
 type TaskEditorSheetProps = {
   open: boolean;
   task: Task | null;
+  kids: Kid[];
+  assignedKidIds: number[];
   isSaving: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (taskId: number, data: UpdateTaskRequest) => Promise<void>;
+  onReplaceAssignments: (taskId: number, kidIds: number[]) => Promise<void>;
+  onCreateKid: (name: string) => Promise<void>;
+  onDeleteKid: (kidId: number) => Promise<void>;
 };
 
 type TaskFormState = {
@@ -65,14 +70,21 @@ function taskToForm(task: Task): TaskFormState {
 export function TaskEditorSheet({
   open,
   task,
+  kids,
+  assignedKidIds,
   isSaving,
   onOpenChange,
   onSave,
+  onReplaceAssignments,
+  onCreateKid,
+  onDeleteKid,
 }: TaskEditorSheetProps) {
   const [form, setForm] = useState<TaskFormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iconQuery, setIconQuery] = useState("");
   const [recentIcons, setRecentIcons] = useState<string[]>([]);
+  const [newKidName, setNewKidName] = useState("");
+  const [selectedKidIds, setSelectedKidIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (!task) {
@@ -84,7 +96,12 @@ export function TaskEditorSheet({
     setForm(taskToForm(task));
     setError(null);
     setIconQuery("");
+    setSelectedKidIds(assignedKidIds);
   }, [task]);
+
+  useEffect(() => {
+    setSelectedKidIds(assignedKidIds);
+  }, [assignedKidIds]);
 
   const selectedIconOption = useMemo(
     () => TASK_ICON_OPTIONS.find((option) => option.value === form?.icon) ?? null,
@@ -146,6 +163,10 @@ export function TaskEditorSheet({
       setError("Selecciona al menos un dia requerido.");
       return;
     }
+    if (selectedKidIds.length === 0) {
+      setError("Selecciona al menos un niño asignado.");
+      return;
+    }
 
     const payload: UpdateTaskRequest = {
       title,
@@ -158,9 +179,34 @@ export function TaskEditorSheet({
 
     try {
       await onSave(task.id, payload);
+      await onReplaceAssignments(task.id, selectedKidIds);
       setError(null);
     } catch (_err) {
       setError("No se pudo guardar la tarea.");
+    }
+  };
+
+  const toggleAssignedKid = (kidId: number, enabled: boolean) => {
+    setSelectedKidIds((prev) => {
+      const next = new Set(prev);
+      if (enabled) next.add(kidId);
+      else next.delete(kidId);
+      return Array.from(next);
+    });
+  };
+
+  const handleCreateKid = async () => {
+    const name = newKidName.trim();
+    if (!name) {
+      setError("El nombre del niño es obligatorio.");
+      return;
+    }
+    try {
+      await onCreateKid(name);
+      setNewKidName("");
+      setError(null);
+    } catch (_err) {
+      setError("No se pudo crear el niño.");
     }
   };
 
@@ -193,6 +239,46 @@ export function TaskEditorSheet({
                   maxLength={120}
                   required
                 />
+              </div>
+
+              <div className="space-y-3">
+                <Label>Niños asignados</Label>
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  {kids.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No hay niños creados todavía.</p>
+                  ) : (
+                    kids.map((kid) => (
+                      <div key={kid.id} className="flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={selectedKidIds.includes(kid.id)}
+                            onCheckedChange={(checked) => toggleAssignedKid(kid.id, checked === true)}
+                          />
+                          <span>{kid.name}</span>
+                        </label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDeleteKid(kid.id)}
+                        >
+                          Quitar
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newKidName}
+                    onChange={(event) => setNewKidName(event.target.value)}
+                    placeholder="Añadir niño"
+                    maxLength={60}
+                  />
+                  <Button type="button" variant="outline" onClick={handleCreateKid}>
+                    Añadir
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">

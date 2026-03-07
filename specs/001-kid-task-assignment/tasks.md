@@ -18,9 +18,9 @@
 
 **Purpose**: Prepare shared structure and documentation artifacts used by all stories.
 
-- [ ] T001 Create database migration script for `kids` and `task_assignments` in `server/db.ts`
-- [ ] T002 [P] Document migration/backfill steps for default kid in `specs/001-kid-task-assignment/quickstart.md`
-- [ ] T003 [P] Add feature API contract notes for implementers in `specs/001-kid-task-assignment/contracts/multi-kid-api.yaml`
+- [X] T001 Create database migration script for `kids` and `task_assignments` in `server/db.ts`
+- [X] T002 [P] Document migration/backfill steps for default kid in `specs/001-kid-task-assignment/quickstart.md`
+- [X] T003 [P] Add feature API contract notes for implementers in `specs/001-kid-task-assignment/contracts/multi-kid-api.yaml`
 
 ---
 
@@ -30,13 +30,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Add `kids` and `task_assignments` table schemas and types in `shared/schema.ts`
-- [ ] T005 Add Zod schemas for kid CRUD and assignment payloads in `shared/schema.ts`
-- [ ] T006 Update shared API route contracts for kid endpoints and task assignment endpoint in `shared/routes.ts`
-- [ ] T007 Implement storage interface methods for kids and task assignments in `server/storage.ts`
-- [ ] T008 Implement kid and assignment API handlers with validation/error responses in `server/routes.ts`
-- [ ] T009 Implement default-kid backfill for existing tasks in `docker/postgres/init/01-init.sql`
-- [ ] T010 Add query key/helpers for kid-scoped task retrieval in `client/src/lib/queryClient.ts`
+- [X] T004 Add `kids` and `task_assignments` table schemas and types in `shared/schema.ts`
+- [X] T005 Add Zod schemas for kid CRUD and assignment payloads in `shared/schema.ts`
+- [X] T006 Update shared API route contracts for kid endpoints and task assignment endpoint in `shared/routes.ts`
+- [X] T007 Implement storage interface methods for kids and task assignments in `server/storage.ts`
+- [X] T008 Implement kid and assignment API handlers with validation/error responses in `server/routes.ts`
+- [X] T009 Implement default-kid backfill for existing tasks in `docker/postgres/init/01-init.sql`
+- [X] T010 Add query key/helpers for kid-scoped task retrieval in `client/src/lib/queryClient.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -50,11 +50,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T011 [P] [US1] Add kid API hooks (`list/create/update/delete`) in `client/src/hooks/use-tasks.ts`
-- [ ] T012 [P] [US1] Create kid management UI section in `client/src/components/TaskEditorSheet.tsx`
-- [ ] T013 [US1] Integrate kid management actions into Home screen flow in `client/src/pages/Home.tsx`
+- [X] T011 [P] [US1] Add kid API hooks (`list/create/update/delete`) in `client/src/hooks/use-tasks.ts`
+- [X] T012 [P] [US1] Create kid management UI section in `client/src/components/TaskEditorSheet.tsx`
+- [X] T013 [US1] Integrate kid management actions into Home screen flow in `client/src/pages/Home.tsx`
 - [ ] T014 [US1] Add duplicate-name and empty-name validation messages in `client/src/components/ui/input.tsx`
-- [ ] T015 [US1] Document manual verification steps for kid CRUD in `specs/001-kid-task-assignment/quickstart.md`
+- [X] T015 [US1] Document manual verification steps for kid CRUD in `specs/001-kid-task-assignment/quickstart.md`
 
 **Checkpoint**: User Story 1 is independently functional and demoable.
 
@@ -68,11 +68,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T016 [P] [US2] Add assignment update API hook for `/api/tasks/{taskId}/assignments` in `client/src/hooks/use-tasks.ts`
-- [ ] T017 [P] [US2] Add multi-kid assignment controls to task editor in `client/src/components/TaskEditorSheet.tsx`
-- [ ] T018 [US2] Persist assignment changes from UI to API in `client/src/pages/Home.tsx`
-- [ ] T019 [US2] Ensure assignment integrity checks for duplicate pairs in `server/storage.ts`
-- [ ] T020 [US2] Document assignment verification steps in `specs/001-kid-task-assignment/quickstart.md`
+- [X] T016 [P] [US2] Add assignment update API hook for `/api/tasks/{taskId}/assignments` in `client/src/hooks/use-tasks.ts`
+- [X] T017 [P] [US2] Add multi-kid assignment controls to task editor in `client/src/components/TaskEditorSheet.tsx`
+- [X] T018 [US2] Persist assignment changes from UI to API in `client/src/pages/Home.tsx`
+- [X] T019 [US2] Ensure assignment integrity checks for duplicate pairs in `server/storage.ts`
+- [X] T020 [US2] Document assignment verification steps in `specs/001-kid-task-assignment/quickstart.md`
 
 **Checkpoint**: User Stories 1 and 2 both function independently.
 
@@ -86,11 +86,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T021 [P] [US3] Add selected-kid state and board context wiring in `client/src/pages/Home.tsx`
-- [ ] T022 [P] [US3] Add kid selector UI for board context in `client/src/components/WeeklyTable.tsx`
-- [ ] T023 [US3] Apply kid filter to task list queries and rendering in `client/src/hooks/use-tasks.ts`
-- [ ] T024 [US3] Ensure print output reflects selected kid in `client/src/pages/Home.tsx`
-- [ ] T025 [US3] Document print and kid-switch manual verification in `specs/001-kid-task-assignment/quickstart.md`
+- [X] T021 [P] [US3] Add selected-kid state and board context wiring in `client/src/pages/Home.tsx`
+- [X] T022 [P] [US3] Add kid selector UI for board context in `client/src/components/WeeklyTable.tsx`
+- [X] T023 [US3] Apply kid filter to task list queries and rendering in `client/src/hooks/use-tasks.ts`
+- [X] T024 [US3] Ensure print output reflects selected kid in `client/src/pages/Home.tsx`
+- [X] T025 [US3] Document print and kid-switch manual verification in `specs/001-kid-task-assignment/quickstart.md`
 
 **Checkpoint**: All user stories are independently functional.
 
@@ -100,9 +100,9 @@
 
 **Purpose**: Final quality checks and documentation alignment across stories.
 
-- [ ] T026 [P] Update API endpoint summary and feature behavior in `README.md`
-- [ ] T027 Reconcile contract and implementation naming consistency in `shared/routes.ts`
-- [ ] T028 Run type validation and fix issues via `npm run check` in `package.json`
+- [X] T026 [P] Update API endpoint summary and feature behavior in `README.md`
+- [X] T027 Reconcile contract and implementation naming consistency in `shared/routes.ts`
+- [X] T028 Run type validation and fix issues via `npm run check` in `package.json`
 - [ ] T029 Run end-to-end manual verification checklist in `specs/001-kid-task-assignment/quickstart.md`
 
 ---

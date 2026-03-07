@@ -1,6 +1,15 @@
 
 import { z } from 'zod';
-import { tasks, completions, updateTaskSchema } from './schema';
+import {
+  tasks,
+  completions,
+  kids,
+  updateTaskSchema,
+  createKidSchema,
+  updateKidSchema,
+  replaceTaskAssignmentsSchema,
+  taskWithAssignmentsSchema,
+} from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -20,8 +29,11 @@ export const api = {
     list: {
       method: 'GET' as const,
       path: '/api/tasks' as const,
+      input: z.object({
+        kidId: z.coerce.number().int().positive().optional(),
+      }),
       responses: {
-        200: z.array(z.custom<typeof tasks.$inferSelect>()),
+        200: z.array(taskWithAssignmentsSchema),
       },
     },
     update: {
@@ -30,6 +42,49 @@ export const api = {
       input: updateTaskSchema,
       responses: {
         200: z.custom<typeof tasks.$inferSelect>(),
+      },
+    },
+    replaceAssignments: {
+      method: 'PUT' as const,
+      path: '/api/tasks/:id/assignments' as const,
+      input: replaceTaskAssignmentsSchema,
+      responses: {
+        200: z.object({
+          taskId: z.number(),
+          kidIds: z.array(z.number()),
+        }),
+      },
+    },
+  },
+  kids: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/kids' as const,
+      responses: {
+        200: z.array(z.custom<typeof kids.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/kids' as const,
+      input: createKidSchema,
+      responses: {
+        201: z.custom<typeof kids.$inferSelect>(),
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/kids/:id' as const,
+      input: updateKidSchema,
+      responses: {
+        200: z.custom<typeof kids.$inferSelect>(),
+      },
+    },
+    remove: {
+      method: 'DELETE' as const,
+      path: '/api/kids/:id' as const,
+      responses: {
+        204: z.object({}),
       },
     },
   },

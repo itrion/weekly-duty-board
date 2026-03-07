@@ -1,5 +1,14 @@
-import { useState } from "react";
-import { useTasks, useCompletions, useToggleCompletion, useUpdateTask } from "@/hooks/use-tasks";
+import { useEffect, useState } from "react";
+import {
+  useTasks,
+  useKids,
+  useCompletions,
+  useToggleCompletion,
+  useUpdateTask,
+  useReplaceTaskAssignments,
+  useCreateKid,
+  useDeleteKid,
+} from "@/hooks/use-tasks";
 import { WeeklyTable } from "@/components/WeeklyTable";
 import { PointsDisplay } from "@/components/PointsDisplay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
@@ -7,11 +16,12 @@ import { Button } from "@/components/ui/button";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { Printer, ChevronLeft, ChevronRight } from "lucide-react";
-import type { Task, UpdateTaskRequest } from "@shared/schema";
+import type { TaskWithAssignments, UpdateTaskRequest } from "@shared/schema";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedKidId, setSelectedKidId] = useState<number | undefined>(undefined);
+  const [editingTask, setEditingTask] = useState<TaskWithAssignments | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   
   // Date calculations
@@ -21,10 +31,20 @@ export default function Home() {
   const endDateStr = format(weekEnd, 'yyyy-MM-dd');
 
   // Queries
-  const { data: tasks, isLoading: tasksLoading } = useTasks();
-  const { data: completions, isLoading: completionsLoading } = useCompletions(startDateStr, endDateStr);
+  const { data: kids, isLoading: kidsLoading } = useKids();
+  const { data: tasks, isLoading: tasksLoading } = useTasks(selectedKidId);
+  const { data: completions } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
   const { mutateAsync: updateTask, isPending: isUpdatingTask } = useUpdateTask();
+  const { mutateAsync: replaceAssignments } = useReplaceTaskAssignments();
+  const { mutateAsync: createKid } = useCreateKid();
+  const { mutateAsync: deleteKid } = useDeleteKid();
+
+  useEffect(() => {
+    if (!selectedKidId && kids && kids.length > 0) {
+      setSelectedKidId(kids[0].id);
+    }
+  }, [kids, selectedKidId]);
 
   const handlePrint = () => {
     window.print();
@@ -42,7 +62,7 @@ export default function Home() {
     toggleTask({ taskId, date, completed: !completed });
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = (task: TaskWithAssignments) => {
     setEditingTask(task);
     setIsEditorOpen(true);
   };
@@ -52,7 +72,11 @@ export default function Home() {
     setIsEditorOpen(false);
   };
 
-  if (tasksLoading) {
+  const handleReplaceAssignments = async (taskId: number, kidIds: number[]) => {
+    await replaceAssignments({ taskId, data: { kidIds } });
+  };
+
+  if (tasksLoading || kidsLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
@@ -91,8 +115,10 @@ export default function Home() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-muted-foreground uppercase tracking-widest">Nombre:</span>
-                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[200px]"></span>
+                <span className="font-bold text-muted-foreground uppercase tracking-widest">Niño:</span>
+                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[200px]">
+                  {kids?.find((kid) => kid.id === selectedKidId)?.name ?? ""}
+                </span>
               </div>
             </div>
           </div>
@@ -124,6 +150,9 @@ export default function Home() {
             <WeeklyTable 
               tasks={tasks} 
               completions={completions || []} 
+              kids={kids || []}
+              selectedKidId={selectedKidId}
+              onSelectKid={setSelectedKidId}
               currentDate={currentDate} 
               onToggle={handleToggle}
               onEditTask={handleEditTask}
@@ -149,11 +178,20 @@ export default function Home() {
         open={isEditorOpen}
         task={editingTask}
         isSaving={isUpdatingTask}
+        kids={kids ?? []}
+        assignedKidIds={editingTask?.kidIds ?? (selectedKidId ? [selectedKidId] : [])}
         onOpenChange={(open) => {
           setIsEditorOpen(open);
           if (!open) setEditingTask(null);
         }}
         onSave={handleSaveTask}
+        onReplaceAssignments={handleReplaceAssignments}
+        onCreateKid={async (name) => {
+          await createKid({ name });
+        }}
+        onDeleteKid={async (kidId) => {
+          await deleteKid(kidId);
+        }}
       />
     </div>
   );
