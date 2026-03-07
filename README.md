@@ -10,7 +10,7 @@ Key features:
 - Points/gamification system with progress levels
 - Week navigation (previous/next week)
 - Print-optimized layout (A4 landscape)
-- Docker-based Postgres setup with initial task seed
+- Docker-based Postgres setup with migration-driven initialization
 
 ## User Preferences
 
@@ -52,7 +52,7 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL (required, via `DATABASE_URL` environment variable)
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-Zod conversion
 - **Schema location**: `shared/schema.ts` (shared between client and server)
-- **Migrations**: Drizzle Kit with `db:push` command (push-based, no migration files needed for dev)
+- **Migrations**: Drizzle Kit with versioned SQL migrations (`db:migrate`)
 - **Tables**:
   - `tasks` — stores task definitions (title, time info, type daily/weekly, required days as JSONB array, icon name, points value)
   - `kids` — stores kid profiles for independent assignment
@@ -98,7 +98,7 @@ shared/           → Code shared between client and server
 
 - **Shared schema and routes**: The `shared/` directory contains both the database schema and API route contracts, ensuring type safety across the full stack
 - **Storage interface pattern**: `IStorage` interface in `storage.ts` abstracts database operations, making it possible to swap implementations
-- **Seeding source**: Default tasks are seeded at database initialization via Docker SQL init scripts
+- **Seeding source**: Default tasks, default kid, and default assignments are seeded via versioned Drizzle migrations
 - **Date strings**: Completions use `YYYY-MM-DD` string format for dates rather than timestamp columns, simplifying day-level queries
 - **Print support**: CSS `@media print` rules are critical — the app is designed to be printed and posted on a fridge
 
@@ -125,9 +125,9 @@ Or run both DB + app in Docker (code is bind-mounted, no image build step):
 - `docker compose up -d db app`
 - Open `http://localhost:5001`
 
-Seed SQL runs automatically on first container initialization from:
+Schema and seed data are applied by Drizzle migrations via bootstrap:
 
-- `docker/postgres/init/01-init.sql`
+- `npm run bootstrap`
 
 If you need to re-run the init seed from scratch, remove the volume and recreate:
 

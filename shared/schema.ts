@@ -37,9 +37,7 @@ export const kids = pgTable(
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
-    nameIdx: uniqueIndex("kids_name_unique").on(table.name),
-  }),
+  (table) => [uniqueIndex("kids_name_unique").on(table.name)],
 );
 
 export const taskAssignments = pgTable(
@@ -50,9 +48,9 @@ export const taskAssignments = pgTable(
     kidId: integer("kid_id").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
-    taskKidIdx: uniqueIndex("task_assignments_task_kid_unique").on(table.taskId, table.kidId),
-  }),
+  (table) => [
+    uniqueIndex("task_assignments_task_kid_unique").on(table.taskId, table.kidId),
+  ],
 );
 
 export const insertTaskSchema = createInsertSchema(tasks);
