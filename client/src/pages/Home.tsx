@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useTasks,
   useKids,
@@ -7,15 +7,21 @@ import {
   useUpdateTask,
   useReplaceTaskAssignments,
   useCreateKid,
+  useUpdateKid,
   useDeleteKid,
 } from "@/hooks/use-tasks";
 import { WeeklyTable } from "@/components/WeeklyTable";
-import { PointsDisplay } from "@/components/PointsDisplay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
-import { Button } from "@/components/ui/button";
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Printer, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TaskWithAssignments, UpdateTaskRequest } from "@shared/schema";
 
 export default function Home() {
@@ -23,12 +29,13 @@ export default function Home() {
   const [selectedKidId, setSelectedKidId] = useState<number | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<TaskWithAssignments | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  
+  const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false);
+
   // Date calculations
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
-  const startDateStr = format(weekStart, 'yyyy-MM-dd');
-  const endDateStr = format(weekEnd, 'yyyy-MM-dd');
+  const startDateStr = format(weekStart, "yyyy-MM-dd");
+  const endDateStr = format(weekEnd, "yyyy-MM-dd");
 
   // Queries
   const { data: kids, isLoading: kidsLoading } = useKids();
@@ -37,7 +44,8 @@ export default function Home() {
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
   const { mutateAsync: updateTask, isPending: isUpdatingTask } = useUpdateTask();
   const { mutateAsync: replaceAssignments } = useReplaceTaskAssignments();
-  const { mutateAsync: createKid } = useCreateKid();
+  const { mutateAsync: createKid, isPending: isCreatingKid } = useCreateKid();
+  const { mutateAsync: updateKid, isPending: isUpdatingKid } = useUpdateKid();
   const { mutateAsync: deleteKid } = useDeleteKid();
 
   useEffect(() => {
@@ -46,17 +54,36 @@ export default function Home() {
     }
   }, [kids, selectedKidId]);
 
+  const totalPointsPossible = useMemo(() => {
+    if (!tasks || tasks.length === 0) return 0;
+
+    const weekDates = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+
+    return tasks.reduce((total, task) => {
+      const occurrences = weekDates.reduce((count, date) => {
+        return count + (task.requiredDays.includes(date.getDay()) ? 1 : 0);
+      }, 0);
+
+      return total + occurrences * task.points;
+    }, 0);
+  }, [tasks, weekStart]);
+
   const handlePrint = () => {
     window.print();
   };
 
   const handlePreviousWeek = () => {
-    setCurrentDate(prev => subWeeks(prev, 1));
+    setCurrentDate((prev) => subWeeks(prev, 1));
   };
 
   const handleNextWeek = () => {
-    setCurrentDate(prev => addWeeks(prev, 1));
+    setCurrentDate((prev) => addWeeks(prev, 1));
   };
+
+  const weekLabel =
+    weekStart.getFullYear() === weekEnd.getFullYear()
+      ? `${format(weekStart, "d MMM", { locale: es })} - ${format(weekEnd, "d MMM yyyy", { locale: es })}`
+      : `${format(weekStart, "d MMM yyyy", { locale: es })} - ${format(weekEnd, "d MMM yyyy", { locale: es })}`;
 
   const handleToggle = (taskId: number, date: string, completed: boolean) => {
     toggleTask({ taskId, date, completed: !completed });
@@ -76,6 +103,24 @@ export default function Home() {
     await replaceAssignments({ taskId, data: { kidIds } });
   };
 
+  const handleCreateKid = async () => {
+    const existingNames = new Set((kids ?? []).map((kid) => kid.name.toLowerCase()));
+    let suffix = (kids?.length ?? 0) + 1;
+    let candidate = `Niño ${suffix}`;
+
+    while (existingNames.has(candidate.toLowerCase())) {
+      suffix += 1;
+      candidate = `Niño ${suffix}`;
+    }
+
+    const created = await createKid({ name: candidate });
+    setSelectedKidId(created.id);
+  };
+
+  const handleRenameKid = async (kidId: number, name: string) => {
+    await updateKid({ kidId, data: { name } });
+  };
+
   if (tasksLoading || kidsLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -87,88 +132,42 @@ export default function Home() {
     );
   }
 
-  // Error state or empty tasks
-  if (!tasks || tasks.length === 0) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <h2 className="text-2xl font-bold text-foreground mb-4">No hay tareas configuradas</h2>
-        <p className="text-muted-foreground">La base de datos no tiene tareas cargadas.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 print:pb-0">
-      <div className="print-container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 print:max-w-none print:pt-0">
-        
+      <div className="print-container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 print:max-w-none print:pt-0">
         {/* Header Section */}
-        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 print:mb-4">
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary mb-2 print:text-2xl uppercase tracking-wider">
-              Tabla Semanal de Responsabilidades
-            </h1>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-12 text-sm md:text-base">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-muted-foreground uppercase tracking-widest">Semana:</span>
-                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[150px] font-medium">
-                  {format(weekStart, "d MMM", { locale: es })} - {format(weekEnd, "d MMM", { locale: es })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-muted-foreground uppercase tracking-widest">Niño:</span>
-                <span className="border-b-2 border-slate-300 px-4 py-1 min-w-[200px]">
-                  {kids?.find((kid) => kid.id === selectedKidId)?.name ?? ""}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons (Hidden on Print) */}
-          <div className="flex items-center gap-2 print:hidden no-print">
-            <div className="flex items-center bg-white rounded-lg border border-border mr-4 shadow-sm">
-              <Button variant="ghost" size="icon" onClick={handlePreviousWeek}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="px-4 py-2 font-medium text-sm border-x border-border">
-                {format(weekStart, "yyyy")}
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleNextWeek}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button onClick={handlePrint} className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all">
-              <Printer className="mr-2 h-4 w-4" />
-              Imprimir Tabla
-            </Button>
-          </div>
+        <header className="mb-2">
+          <h1 className="text-xl md:text-2xl font-display font-bold text-primary uppercase tracking-wider">
+            Tabla de tareas
+          </h1>
         </header>
 
         {/* Main Content */}
         <main className="space-y-6 print:space-y-4">
           <section className="print-avoid-break">
-            <WeeklyTable 
-              tasks={tasks} 
-              completions={completions || []} 
+            <WeeklyTable
+              tasks={tasks || []}
+              completions={completions || []}
               kids={kids || []}
               selectedKidId={selectedKidId}
               onSelectKid={setSelectedKidId}
-              currentDate={currentDate} 
+              onCreateKid={handleCreateKid}
+              onRenameKid={handleRenameKid}
+              isKidMutationPending={isCreatingKid || isUpdatingKid}
+              currentDate={currentDate}
+              weekLabel={weekLabel}
+              totalPointsPossible={totalPointsPossible}
+              onPreviousWeek={handlePreviousWeek}
+              onNextWeek={handleNextWeek}
+              onOpenWeekPicker={() => setIsWeekPickerOpen(true)}
+              onPrint={handlePrint}
               onToggle={handleToggle}
               onEditTask={handleEditTask}
               isPending={isToggling}
             />
           </section>
-          
-          <section className="print-avoid-break">
-            <PointsDisplay 
-              tasks={tasks} 
-              completions={completions || []} 
-              currentDate={currentDate} 
-            />
-          </section>
         </main>
-        
+
         <footer className="mt-12 text-center text-sm text-muted-foreground print:hidden">
           <p>© {new Date().getFullYear()} Sistema de Responsabilidades</p>
         </footer>
@@ -193,6 +192,25 @@ export default function Home() {
           await deleteKid(kidId);
         }}
       />
+
+      <Dialog open={isWeekPickerOpen} onOpenChange={setIsWeekPickerOpen}>
+        <DialogContent className="w-auto max-w-[360px] p-4">
+          <DialogHeader className="space-y-1">
+            <DialogTitle>Seleccionar semana</DialogTitle>
+            <DialogDescription>Elige un día y usaremos su semana completa.</DialogDescription>
+          </DialogHeader>
+          <Calendar
+            mode="single"
+            selected={currentDate}
+            locale={es}
+            onSelect={(date) => {
+              if (!date) return;
+              setCurrentDate(date);
+              setIsWeekPickerOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
