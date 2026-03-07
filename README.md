@@ -132,3 +132,11 @@ Schema and seed data are applied by Drizzle migrations via bootstrap:
 If you need to re-run the init seed from scratch, remove the volume and recreate:
 
 - `npm run db:reset`
+
+## Drizzle Workflow (Required)
+
+- `shared/schema.ts` is the source of truth for schema definitions.
+- After schema changes, run `drizzle-kit generate` to create a new migration by diff.
+- Apply migrations with `npm run db:migrate` (or `npm run bootstrap`).
+- Commit schema changes and migration files together.
+- Avoid `db:push` in normal team workflows; use migration files as the canonical history.
