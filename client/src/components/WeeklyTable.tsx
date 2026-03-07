@@ -1,23 +1,43 @@
-import { Task, Completion } from "@shared/schema";
+import { TaskWithAssignments, Completion, Kid } from "@shared/schema";
 import { format, startOfWeek, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTaskIcon } from "@/lib/task-icons";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface WeeklyTableProps {
-  tasks: Task[];
+  tasks: TaskWithAssignments[];
   completions: Completion[];
+  kids: Kid[];
+  selectedKidId?: number;
+  onSelectKid: (kidId: number) => void;
   currentDate: Date;
   onToggle: (taskId: number, date: string, currentStatus: boolean) => void;
-  onEditTask: (task: Task) => void;
+  onEditTask: (task: TaskWithAssignments) => void;
   isPending: boolean;
 }
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const DAY_KEYS = [1, 2, 3, 4, 5, 6, 0]; // Monday=1... Sunday=0 for date-fns
 
-export function WeeklyTable({ tasks, completions, currentDate, onToggle, onEditTask, isPending }: WeeklyTableProps) {
+export function WeeklyTable({
+  tasks,
+  completions,
+  kids,
+  selectedKidId,
+  onSelectKid,
+  currentDate,
+  onToggle,
+  onEditTask,
+  isPending,
+}: WeeklyTableProps) {
   // Calculate week dates
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
@@ -28,7 +48,7 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, onEditT
   };
 
   // Helper to check if a task is required on a specific day index (0-6, Sunday is 0)
-  const isRequiredDay = (task: Task, date: Date) => {
+  const isRequiredDay = (task: TaskWithAssignments, date: Date) => {
     const dayIndex = date.getDay(); // 0 = Sun, 1 = Mon...
     return task.requiredDays.includes(dayIndex);
   };
@@ -38,6 +58,27 @@ export function WeeklyTable({ tasks, completions, currentDate, onToggle, onEditT
 
   return (
     <div className="w-full bg-white rounded-xl shadow-xl overflow-hidden border border-border/50">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border print:hidden">
+        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Niño</span>
+        <div className="w-full max-w-xs">
+          <Select
+            value={selectedKidId ? String(selectedKidId) : undefined}
+            onValueChange={(value) => onSelectKid(Number(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona niño" />
+            </SelectTrigger>
+            <SelectContent>
+              {kids.map((kid) => (
+                <SelectItem key={kid.id} value={String(kid.id)}>
+                  {kid.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Table Header */}
       <div className="grid grid-cols-[300px_repeat(7,1fr)] bg-primary text-primary-foreground">
         <div className="p-4 font-display font-bold text-lg tracking-wider flex items-center">

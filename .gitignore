@@ -1,7 +1,23 @@
 node_modules
 dist
+build
 .DS_Store
+Thumbs.db
 server/public
 vite.config.ts.*
 *.tar.gz
+*.log
+coverage
+*.tmp
+*.swp
+.vscode/
+.idea/
 .env
+
+# Local environment files (keep template committed)
+.env.*
+!.env.example
+
+# Local Codex runtime/state (contains auth and session data)
+.codex
+!.codex/prompts
