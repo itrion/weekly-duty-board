@@ -65,6 +65,7 @@ Preferred communication style: Simple, everyday language.
 
 | Method | Path                                   | Purpose                                 |
 | ------ | -------------------------------------- | --------------------------------------- |
+| POST   | `/api/board-items`                     | Create task/routine and assign kids     |
 | GET    | `/api/board-items?kidId=`              | List board items (tasks + routines)     |
 | PATCH  | `/api/board-items/:kind/:id`           | Update one task/routine                 |
 | PUT    | `/api/board-items/:kind/:id/assignments` | Replace kid assignments for item      |
