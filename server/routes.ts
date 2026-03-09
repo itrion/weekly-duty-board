@@ -11,6 +11,24 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  app.post(api.board.create.path, async (req, res) => {
+    try {
+      const input = api.board.create.input.parse(req.body);
+      const createdItem = await storage.createBoardItem(input);
+      res.status(201).json(createdItem);
+    } catch (err) {
+      if (err instanceof AssignmentLimitError) {
+        return res.status(400).json({
+          message: `Límite alcanzado: ${err.cadence === "daily" ? "6 diarias" : "2 semanales"} por niño.`,
+        });
+      }
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors });
+      }
+      throw err;
+    }
+  });
+
   app.get(api.board.list.path, async (req, res) => {
     const parsed = api.board.list.input.safeParse(req.query);
     if (!parsed.success) {

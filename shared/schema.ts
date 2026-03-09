@@ -104,9 +104,13 @@ export const updateKidSchema = z.object({
   active: z.boolean().optional(),
 });
 export const replaceBoardItemAssignmentsSchema = z.object({
-  kidIds: z.array(z.number().int().positive()).min(1),
+  kidIds: z.array(z.number().int().positive()),
 });
 export const replaceTaskAssignmentsSchema = replaceBoardItemAssignmentsSchema;
+export const createBoardItemSchema = updateBoardItemSchema.extend({
+  itemKind: boardItemKindSchema,
+  kidIds: z.array(z.number().int().positive()),
+});
 export const boardItemWithAssignmentsSchema = z.object({
   id: z.number(),
   itemKind: boardItemKindSchema,
@@ -138,6 +142,7 @@ export type CreateKidRequest = z.infer<typeof createKidSchema>;
 export type UpdateKidRequest = z.infer<typeof updateKidSchema>;
 export type ReplaceBoardItemAssignmentsRequest = z.infer<typeof replaceBoardItemAssignmentsSchema>;
 export type ReplaceTaskAssignmentsRequest = ReplaceBoardItemAssignmentsRequest;
+export type CreateBoardItemRequest = z.infer<typeof createBoardItemSchema>;
 export type BoardItemWithAssignments = z.infer<typeof boardItemWithAssignmentsSchema>;
 export type TaskWithAssignments = BoardItemWithAssignments;
 export type BoardItemKind = z.infer<typeof boardItemKindSchema>;

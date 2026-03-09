@@ -14,6 +14,7 @@ import {
   type UpdateKidRequest,
   type BoardItemWithAssignments,
   type UpdateBoardItemRequest,
+  type CreateBoardItemRequest,
   type ReplaceBoardItemAssignmentsRequest,
   type BoardItemKind,
   type BoardCadence,
@@ -33,6 +34,7 @@ class AssignmentLimitError extends Error {
 }
 
 export interface IStorage {
+  createBoardItem(data: CreateBoardItemRequest): Promise<Task | Routine>;
   getBoardItems(kidId?: number): Promise<BoardItemWithAssignments[]>;
   updateBoardItem(itemKind: BoardItemKind, itemId: number, data: UpdateBoardItemRequest): Promise<Task | Routine | null>;
   getKids(): Promise<Kid[]>;
@@ -49,6 +51,65 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async createBoardItem(data: CreateBoardItemRequest): Promise<Task | Routine> {
+    const uniqueKidIds = Array.from(new Set(data.kidIds));
+
+    await this.assertKidSlotCapacity({
+      cadence: data.type,
+      itemKind: data.itemKind,
+      itemId: -1,
+      nextKidIds: uniqueKidIds,
+      existingKidIds: new Set<number>(),
+    });
+
+    if (data.itemKind === "task") {
+      const [createdTask] = await db
+        .insert(tasks)
+        .values({
+          title: data.title,
+          timeInfo: data.timeInfo,
+          type: data.type,
+          requiredDays: data.requiredDays,
+          points: data.points,
+          icon: data.icon,
+        })
+        .returning();
+
+      if (uniqueKidIds.length > 0) {
+        await db.insert(taskAssignments).values(
+          uniqueKidIds.map((kidId) => ({
+            taskId: createdTask.id,
+            kidId,
+          })),
+        );
+      }
+      return createdTask;
+    }
+
+    const [createdRoutine] = await db
+      .insert(routines)
+      .values({
+        title: data.title,
+        timeInfo: data.timeInfo,
+        type: data.type,
+        requiredDays: data.requiredDays,
+        points: data.points,
+        icon: data.icon,
+      })
+      .returning();
+
+    if (uniqueKidIds.length > 0) {
+      await db.insert(routineAssignments).values(
+        uniqueKidIds.map((kidId) => ({
+          routineId: createdRoutine.id,
+          kidId,
+        })),
+      );
+    }
+
+    return createdRoutine;
+  }
+
   async getBoardItems(kidId?: number): Promise<BoardItemWithAssignments[]> {
     const [taskAssignmentRows, routineAssignmentRows] = await Promise.all([
       db
@@ -221,12 +282,14 @@ export class DatabaseStorage implements IStorage {
       });
 
       await db.delete(taskAssignments).where(eq(taskAssignments.taskId, itemId));
-      await db.insert(taskAssignments).values(
-        uniqueKidIds.map((kidId) => ({
-          taskId: itemId,
-          kidId,
-        })),
-      );
+      if (uniqueKidIds.length > 0) {
+        await db.insert(taskAssignments).values(
+          uniqueKidIds.map((kidId) => ({
+            taskId: itemId,
+            kidId,
+          })),
+        );
+      }
 
       return { itemKind, itemId, kidIds: uniqueKidIds };
     }
@@ -251,12 +314,14 @@ export class DatabaseStorage implements IStorage {
     });
 
     await db.delete(routineAssignments).where(eq(routineAssignments.routineId, itemId));
-    await db.insert(routineAssignments).values(
-      uniqueKidIds.map((kidId) => ({
-        routineId: itemId,
-        kidId,
-      })),
-    );
+    if (uniqueKidIds.length > 0) {
+      await db.insert(routineAssignments).values(
+        uniqueKidIds.map((kidId) => ({
+          routineId: itemId,
+          kidId,
+        })),
+      );
+    }
 
     return { itemKind, itemId, kidIds: uniqueKidIds };
   }

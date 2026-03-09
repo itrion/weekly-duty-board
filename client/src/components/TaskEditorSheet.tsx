@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type {
   BoardItemKind,
   BoardItemWithAssignments,
+  CreateBoardItemRequest,
   Kid,
   UpdateBoardItemRequest,
 } from "@shared/schema";
@@ -44,15 +45,18 @@ type TaskEditorSheetProps = {
   item: BoardItemWithAssignments | null;
   kids: Kid[];
   assignedKidIds: number[];
+  initialKidIds?: number[];
+  initialItemKind?: BoardItemKind;
   isSaving: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (itemKind: BoardItemKind, itemId: number, data: UpdateBoardItemRequest) => Promise<void>;
+  onCreate: (data: CreateBoardItemRequest) => Promise<void>;
   onReplaceAssignments: (itemKind: BoardItemKind, itemId: number, kidIds: number[]) => Promise<void>;
   onCreateKid: (name: string) => Promise<void>;
-  onDeleteKid: (kidId: number) => Promise<void>;
 };
 
 type TaskFormState = {
+  itemKind: BoardItemKind;
   title: string;
   timeInfo: string;
   type: "daily" | "weekly";
@@ -63,6 +67,7 @@ type TaskFormState = {
 
 function itemToForm(item: BoardItemWithAssignments): TaskFormState {
   return {
+    itemKind: item.itemKind,
     title: item.title,
     timeInfo: item.timeInfo ?? "",
     type: item.type === "weekly" ? "weekly" : "daily",
@@ -72,17 +77,31 @@ function itemToForm(item: BoardItemWithAssignments): TaskFormState {
   };
 }
 
+function buildDefaultForm(itemKind: BoardItemKind): TaskFormState {
+  return {
+    itemKind,
+    title: "",
+    timeInfo: "",
+    type: "daily",
+    requiredDays: [1, 2, 3, 4, 5],
+    points: 1,
+    icon: "sparkles",
+  };
+}
+
 export function TaskEditorSheet({
   open,
   item,
   kids,
   assignedKidIds,
+  initialKidIds,
+  initialItemKind = "task",
   isSaving,
   onOpenChange,
   onSave,
+  onCreate,
   onReplaceAssignments,
   onCreateKid,
-  onDeleteKid,
 }: TaskEditorSheetProps) {
   const [form, setForm] = useState<TaskFormState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -92,21 +111,18 @@ export function TaskEditorSheet({
   const [selectedKidIds, setSelectedKidIds] = useState<number[]>([]);
 
   useEffect(() => {
-    if (!item) {
-      setForm(null);
-      setError(null);
-      setIconQuery("");
-      return;
+    if (!open) return;
+
+    if (item) {
+      setForm(itemToForm(item));
+      setSelectedKidIds(assignedKidIds);
+    } else {
+      setForm(buildDefaultForm(initialItemKind));
+      setSelectedKidIds(initialKidIds ?? []);
     }
-    setForm(itemToForm(item));
     setError(null);
     setIconQuery("");
-    setSelectedKidIds(assignedKidIds);
-  }, [item, assignedKidIds]);
-
-  useEffect(() => {
-    setSelectedKidIds(assignedKidIds);
-  }, [assignedKidIds]);
+  }, [open, item, assignedKidIds, initialItemKind, initialKidIds]);
 
   const selectedIconOption = useMemo(
     () => TASK_ICON_OPTIONS.find((option) => option.value === form?.icon) ?? null,
@@ -154,9 +170,18 @@ export function TaskEditorSheet({
     setRecentIcons((prev) => [iconValue, ...prev.filter((value) => value !== iconValue)].slice(0, 8));
   };
 
+  const toggleAssignedKid = (kidId: number, enabled: boolean) => {
+    setSelectedKidIds((prev) => {
+      const next = new Set(prev);
+      if (enabled) next.add(kidId);
+      else next.delete(kidId);
+      return Array.from(next);
+    });
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!item || !form) return;
+    if (!form) return;
 
     const title = form.title.trim();
     if (!title) {
@@ -166,10 +191,6 @@ export function TaskEditorSheet({
 
     if (form.requiredDays.length === 0) {
       setError("Selecciona al menos un dia requerido.");
-      return;
-    }
-    if (selectedKidIds.length === 0) {
-      setError("Selecciona al menos un niño asignado.");
       return;
     }
 
@@ -183,21 +204,24 @@ export function TaskEditorSheet({
     };
 
     try {
-      await onSave(item.itemKind, item.id, payload);
-      await onReplaceAssignments(item.itemKind, item.id, selectedKidIds);
+      if (item) {
+        await onSave(item.itemKind, item.id, payload);
+        await onReplaceAssignments(item.itemKind, item.id, selectedKidIds);
+      } else {
+        if (selectedKidIds.length === 0) {
+          setError("Selecciona al menos un niño para crear la tarea/rutina.");
+          return;
+        }
+        await onCreate({
+          ...payload,
+          itemKind: form.itemKind,
+          kidIds: selectedKidIds,
+        });
+      }
       setError(null);
     } catch (_err) {
       setError("No se pudo guardar.");
     }
-  };
-
-  const toggleAssignedKid = (kidId: number, enabled: boolean) => {
-    setSelectedKidIds((prev) => {
-      const next = new Set(prev);
-      if (enabled) next.add(kidId);
-      else next.delete(kidId);
-      return Array.from(next);
-    });
   };
 
   const handleCreateKid = async () => {
@@ -215,6 +239,9 @@ export function TaskEditorSheet({
     }
   };
 
+  const editorKind = item?.itemKind ?? form?.itemKind ?? "task";
+  const isCreateMode = item === null;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[min(92vw,430px)] sm:max-w-none p-0">
@@ -224,15 +251,41 @@ export function TaskEditorSheet({
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <SelectedIcon className="h-4 w-4" />
               </span>
-              {item?.itemKind === "routine" ? "Editar Rutina" : "Editar Tarea"}
+              {isCreateMode
+                ? editorKind === "routine"
+                  ? "Nueva Rutina"
+                  : "Nueva Tarea"
+                : editorKind === "routine"
+                  ? "Editar Rutina"
+                  : "Editar Tarea"}
             </SheetTitle>
             <SheetDescription>
-              Cambia los campos y guarda para actualizar este elemento del tablero.
+              Ajusta campos, asignaciones y guarda.
             </SheetDescription>
           </SheetHeader>
 
           <ScrollArea className="flex-1">
             <div className="space-y-5 p-5">
+              {isCreateMode && (
+                <div className="space-y-2">
+                  <Label>Tipo de elemento</Label>
+                  <Select
+                    value={form?.itemKind ?? "task"}
+                    onValueChange={(value: BoardItemKind) =>
+                      setForm((prev) => (prev ? { ...prev, itemKind: value } : prev))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="task">Tarea</SelectItem>
+                      <SelectItem value="routine">Rutina</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="task-title">Titulo</Label>
                 <Input
@@ -252,25 +305,29 @@ export function TaskEditorSheet({
                   {kids.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No hay niños creados todavía.</p>
                   ) : (
-                    kids.map((kid) => (
-                      <div key={kid.id} className="flex items-center justify-between gap-2">
-                        <label className="flex items-center gap-2 text-sm">
-                          <Checkbox
-                            checked={selectedKidIds.includes(kid.id)}
-                            onCheckedChange={(checked) => toggleAssignedKid(kid.id, checked === true)}
-                          />
-                          <span>{kid.name}</span>
-                        </label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDeleteKid(kid.id)}
-                        >
-                          Quitar
-                        </Button>
-                      </div>
-                    ))
+                    kids.map((kid) => {
+                      const isAssigned = selectedKidIds.includes(kid.id);
+                      return (
+                        <div key={kid.id} className="flex items-center justify-between gap-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={isAssigned}
+                              onCheckedChange={(checked) => toggleAssignedKid(kid.id, checked === true)}
+                            />
+                            <span>{kid.name}</span>
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={!isAssigned}
+                            onClick={() => toggleAssignedKid(kid.id, false)}
+                          >
+                            Quitar
+                          </Button>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -377,7 +434,9 @@ export function TaskEditorSheet({
                   <div className="space-y-3 p-3">
                     {recentIconOptions.length > 0 && (
                       <div className="space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Recientes</p>
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          Recientes
+                        </p>
                         <div className="grid grid-cols-8 gap-2">
                           {recentIconOptions.map((option) => (
                             <button
@@ -443,7 +502,7 @@ export function TaskEditorSheet({
               Cancelar
             </Button>
             <Button type="submit" disabled={!form || isSaving}>
-              {isSaving ? "Guardando..." : "Guardar cambios"}
+              {isSaving ? "Guardando..." : isCreateMode ? "Crear" : "Guardar cambios"}
             </Button>
           </SheetFooter>
         </form>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type {
+  CreateBoardItemRequest,
   CreateKidRequest,
   ReplaceBoardItemAssignmentsRequest,
   ToggleBoardItemRequest,
@@ -17,6 +18,27 @@ export function useTasks(kidId?: number) {
       const res = await fetch(`${api.board.list.path}${search}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch board items");
       return api.board.list.responses[200].parse(await res.json());
+    },
+  });
+}
+
+export function useCreateBoardItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateBoardItemRequest) => {
+      const validated = api.board.create.input.parse(data);
+      const res = await fetch(api.board.create.path, {
+        method: api.board.create.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create board item");
+      return api.board.create.responses[201].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.board.list.path] });
     },
   });
 }

@@ -16,6 +16,7 @@ interface WeeklyTableProps {
   selectedKidId?: number;
   onSelectKid: (kidId: number) => void;
   onCreateKid: () => Promise<void>;
+  onCreateItem: () => void;
   onRenameKid: (kidId: number, name: string) => Promise<void>;
   isKidMutationPending: boolean;
   currentDate: Date;
@@ -39,6 +40,7 @@ export function WeeklyTable({
   selectedKidId,
   onSelectKid,
   onCreateKid,
+  onCreateItem,
   onRenameKid,
   isKidMutationPending,
   currentDate,
@@ -220,6 +222,16 @@ export function WeeklyTable({
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5">Puntos:</span>
               <span className="font-mono text-sm font-bold text-primary">______/{totalPointsPossible}</span>
             </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onCreateItem}
+              className="no-print print:hidden"
+            >
+              <Plus className="mr-1.5 h-4 w-4" />
+              Nuevo
+            </Button>
 
             <Button
               size="sm"

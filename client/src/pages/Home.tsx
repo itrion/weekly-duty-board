@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  useCreateBoardItem,
   useTasks,
   useKids,
   useCompletions,
@@ -8,7 +9,6 @@ import {
   useReplaceBoardItemAssignments,
   useCreateKid,
   useUpdateKid,
-  useDeleteKid,
 } from "@/hooks/use-tasks";
 import { WeeklyTable } from "@/components/WeeklyTable";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
@@ -23,6 +23,7 @@ import {
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import type {
+  CreateBoardItemRequest,
   BoardItemWithAssignments,
   BoardItemKind,
   UpdateBoardItemRequest,
@@ -46,11 +47,11 @@ export default function Home() {
   const { data: items, isLoading: itemsLoading } = useTasks(selectedKidId);
   const { data: completions } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
+  const { mutateAsync: createBoardItem, isPending: isCreatingItem } = useCreateBoardItem();
   const { mutateAsync: updateBoardItem, isPending: isUpdatingItem } = useUpdateBoardItem();
   const { mutateAsync: replaceAssignments } = useReplaceBoardItemAssignments();
   const { mutateAsync: createKid, isPending: isCreatingKid } = useCreateKid();
   const { mutateAsync: updateKid, isPending: isUpdatingKid } = useUpdateKid();
-  const { mutateAsync: deleteKid } = useDeleteKid();
 
   useEffect(() => {
     if (!selectedKidId && kids && kids.length > 0) {
@@ -98,6 +99,11 @@ export default function Home() {
     setIsEditorOpen(true);
   };
 
+  const handleStartCreateItem = () => {
+    setEditingItem(null);
+    setIsEditorOpen(true);
+  };
+
   const handleSaveItem = async (
     itemKind: BoardItemKind,
     itemId: number,
@@ -113,6 +119,11 @@ export default function Home() {
     kidIds: number[],
   ) => {
     await replaceAssignments({ itemKind, itemId, data: { kidIds } });
+  };
+
+  const handleCreateItem = async (data: CreateBoardItemRequest) => {
+    await createBoardItem(data);
+    setIsEditorOpen(false);
   };
 
   const handleCreateKid = async () => {
@@ -164,6 +175,7 @@ export default function Home() {
               selectedKidId={selectedKidId}
               onSelectKid={setSelectedKidId}
               onCreateKid={handleCreateKid}
+              onCreateItem={handleStartCreateItem}
               onRenameKid={handleRenameKid}
               isKidMutationPending={isCreatingKid || isUpdatingKid}
               currentDate={currentDate}
@@ -188,20 +200,19 @@ export default function Home() {
       <TaskEditorSheet
         open={isEditorOpen}
         item={editingItem}
-        isSaving={isUpdatingItem}
+        isSaving={isUpdatingItem || isCreatingItem}
         kids={kids ?? []}
         assignedKidIds={editingItem?.kidIds ?? (selectedKidId ? [selectedKidId] : [])}
+        initialKidIds={selectedKidId ? [selectedKidId] : []}
         onOpenChange={(open) => {
           setIsEditorOpen(open);
           if (!open) setEditingItem(null);
         }}
         onSave={handleSaveItem}
+        onCreate={handleCreateItem}
         onReplaceAssignments={handleReplaceAssignments}
         onCreateKid={async (name) => {
           await createKid({ name });
-        }}
-        onDeleteKid={async (kidId) => {
-          await deleteKid(kidId);
         }}
       />
 

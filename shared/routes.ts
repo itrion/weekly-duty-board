@@ -6,6 +6,7 @@ import {
   completions,
   kids,
   boardItemKindSchema,
+  createBoardItemSchema,
   updateBoardItemSchema,
   createKidSchema,
   updateKidSchema,
@@ -28,6 +29,17 @@ export const errorSchemas = {
 
 export const api = {
   board: {
+    create: {
+      method: 'POST' as const,
+      path: '/api/board-items' as const,
+      input: createBoardItemSchema,
+      responses: {
+        201: z.union([
+          z.custom<typeof tasks.$inferSelect>(),
+          z.custom<typeof routines.$inferSelect>(),
+        ]),
+      },
+    },
     list: {
       method: 'GET' as const,
       path: '/api/board-items' as const,
