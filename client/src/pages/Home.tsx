@@ -367,7 +367,7 @@ export default function Home() {
           }
         >
           <div
-            className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm xl:flex xl:h-[var(--sidebar-card-height)] xl:flex-col"
+            className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm xl:flex xl:h-[var(--sidebar-card-height)] xl:min-h-[44rem] xl:flex-col"
             style={
               tableHeight
                 ? ({

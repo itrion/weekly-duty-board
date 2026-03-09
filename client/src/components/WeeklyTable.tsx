@@ -340,7 +340,7 @@ export function WeeklyTable({
     <div ref={boardShellRef} className="board-print-shell w-full" style={boardPrintStyle}>
       <div
         ref={boardFrameRef}
-        className="board-print-frame w-full overflow-hidden rounded-xl border border-border/50 bg-white shadow-xl"
+        className="board-print-frame w-full overflow-hidden rounded-xl border border-border/50 bg-white shadow-xl xl:min-h-[44rem] print:min-h-0"
       >
         <div className="flex flex-col gap-2 border-b border-border bg-slate-50/70 px-3 py-2 print:gap-1 print:bg-white print:px-2 print:py-1">
           <div className="flex items-end gap-2">
@@ -490,7 +490,7 @@ export function WeeklyTable({
         </div>
 
         {dailyItems.length === 0 && weeklyItems.length === 0 && (
-          <div className="border-b border-border/60 p-6 text-sm text-muted-foreground">
+          <div className="flex min-h-[16rem] items-center border-b border-border/60 p-6 text-sm text-muted-foreground">
             Este niño no tiene tareas ni rutinas asignadas todavía.
           </div>
         )}
