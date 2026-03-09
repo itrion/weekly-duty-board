@@ -57,7 +57,7 @@ export const queryClient = new QueryClient({
 });
 
 export const queryKeys = {
-  tasks: (kidId?: number) => ["/api/tasks", kidId ?? "all"] as const,
+  tasks: (kidId?: number) => ["/api/board-items", kidId ?? "all"] as const,
   kids: () => ["/api/kids"] as const,
   completions: (startDate: string, endDate: string) =>
     ["/api/completions", startDate, endDate] as const,

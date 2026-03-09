@@ -1,8 +1,9 @@
 
 import type { Express } from "express";
 import type { Server } from "http";
-import { storage } from "./storage";
+import { AssignmentLimitError, storage } from "./storage";
 import { api } from "@shared/routes";
+import { boardItemKindSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -10,31 +11,32 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.get(api.tasks.list.path, async (req, res) => {
-    const parsed = api.tasks.list.input.safeParse(req.query);
+  app.get(api.board.list.path, async (req, res) => {
+    const parsed = api.board.list.input.safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ message: "Invalid kid filter" });
     }
 
-    const tasks = await storage.getTasks(parsed.data.kidId);
-    res.json(tasks);
+    const boardItems = await storage.getBoardItems(parsed.data.kidId);
+    res.json(boardItems);
   });
 
-  app.patch(api.tasks.update.path, async (req, res) => {
-    const taskId = Number(req.params.id);
-    if (!Number.isInteger(taskId) || taskId < 1) {
-      return res.status(400).json({ message: "Invalid task id" });
+  app.patch(api.board.update.path, async (req, res) => {
+    const itemId = Number(req.params.id);
+    if (!Number.isInteger(itemId) || itemId < 1) {
+      return res.status(400).json({ message: "Invalid board item id" });
     }
 
     try {
-      const input = api.tasks.update.input.parse(req.body);
-      const updatedTask = await storage.updateTask(taskId, input);
+      const itemKind = boardItemKindSchema.parse(req.params.kind);
+      const input = api.board.update.input.parse(req.body);
+      const updatedItem = await storage.updateBoardItem(itemKind, itemId, input);
 
-      if (!updatedTask) {
-        return res.status(404).json({ message: "Task not found" });
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Board item not found" });
       }
 
-      res.json(updatedTask);
+      res.json(updatedItem);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors });
@@ -43,20 +45,26 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.tasks.replaceAssignments.path, async (req, res) => {
-    const taskId = Number(req.params.id);
-    if (!Number.isInteger(taskId) || taskId < 1) {
-      return res.status(400).json({ message: "Invalid task id" });
+  app.put(api.board.replaceAssignments.path, async (req, res) => {
+    const itemId = Number(req.params.id);
+    if (!Number.isInteger(itemId) || itemId < 1) {
+      return res.status(400).json({ message: "Invalid board item id" });
     }
 
     try {
-      const input = api.tasks.replaceAssignments.input.parse(req.body);
-      const result = await storage.replaceTaskAssignments(taskId, input);
+      const itemKind = boardItemKindSchema.parse(req.params.kind);
+      const input = api.board.replaceAssignments.input.parse(req.body);
+      const result = await storage.replaceBoardItemAssignments(itemKind, itemId, input);
       if (!result) {
-        return res.status(404).json({ message: "Task not found" });
+        return res.status(404).json({ message: "Board item not found" });
       }
       res.json(result);
     } catch (err) {
+      if (err instanceof AssignmentLimitError) {
+        return res.status(400).json({
+          message: `Límite alcanzado: ${err.cadence === "daily" ? "6 diarias" : "2 semanales"} por niño.`,
+        });
+      }
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors });
       }

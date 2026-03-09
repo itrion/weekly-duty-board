@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TaskWithAssignments, Completion, Kid } from "@shared/schema";
+import { BoardItemWithAssignments, Completion, Kid, BoardItemKind } from "@shared/schema";
 import { format, startOfWeek, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Check, ChevronLeft, ChevronRight, Plus, Printer } from "lucide-react";
@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
 interface WeeklyTableProps {
-  tasks: TaskWithAssignments[];
+  items: BoardItemWithAssignments[];
   completions: Completion[];
   kids: Kid[];
   selectedKidId?: number;
@@ -25,15 +25,15 @@ interface WeeklyTableProps {
   onNextWeek: () => void;
   onOpenWeekPicker: () => void;
   onPrint: () => void;
-  onToggle: (taskId: number, date: string, currentStatus: boolean) => void;
-  onEditTask: (task: TaskWithAssignments) => void;
+  onToggle: (itemKind: BoardItemKind, itemId: number, date: string, currentStatus: boolean) => void;
+  onEditItem: (item: BoardItemWithAssignments) => void;
   isPending: boolean;
 }
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 export function WeeklyTable({
-  tasks,
+  items,
   completions,
   kids,
   selectedKidId,
@@ -49,7 +49,7 @@ export function WeeklyTable({
   onOpenWeekPicker,
   onPrint,
   onToggle,
-  onEditTask,
+  onEditItem,
   isPending,
 }: WeeklyTableProps) {
   const [editingKidId, setEditingKidId] = useState<number | null>(null);
@@ -60,18 +60,22 @@ export function WeeklyTable({
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
 
   // Helper to check if a task is completed on a specific date
-  const isCompleted = (taskId: number, dateStr: string) => {
-    return completions.some((c) => c.taskId === taskId && c.date === dateStr && c.completed);
+  const isCompleted = (itemKind: BoardItemKind, itemId: number, dateStr: string) => {
+    return completions.some((completion) => {
+      if (!completion.completed || completion.date !== dateStr) return false;
+      if (itemKind === "task") return completion.taskId === itemId;
+      return completion.routineId === itemId;
+    });
   };
 
   // Helper to check if a task is required on a specific day index (0-6, Sunday is 0)
-  const isRequiredDay = (task: TaskWithAssignments, date: Date) => {
+  const isRequiredDay = (item: BoardItemWithAssignments, date: Date) => {
     const dayIndex = date.getDay(); // 0 = Sun, 1 = Mon...
-    return task.requiredDays.includes(dayIndex);
+    return item.requiredDays.includes(dayIndex);
   };
 
-  const dailyTasks = tasks.filter((t) => t.type === "daily");
-  const weeklyTasks = tasks.filter((t) => t.type === "weekly");
+  const dailyItems = items.filter((item) => item.type === "daily");
+  const weeklyItems = items.filter((item) => item.type === "weekly");
 
   const startRename = (kid: Kid) => {
     setEditingKidId(kid.id);
@@ -242,49 +246,55 @@ export function WeeklyTable({
 
       {/* Daily Tasks Section */}
       <div className="bg-secondary/30">
-        <div className="px-4 py-2 text-xs font-bold text-primary uppercase tracking-widest border-b border-border">Tareas Diarias</div>
+        <div className="px-4 py-2 text-xs font-bold text-primary uppercase tracking-widest border-b border-border">Tareas y Rutinas Diarias</div>
       </div>
 
-      {dailyTasks.length === 0 && weeklyTasks.length === 0 && (
+      {dailyItems.length === 0 && weeklyItems.length === 0 && (
         <div className="p-6 text-sm text-muted-foreground border-b border-border/60">
-          Este niño no tiene tareas asignadas todavía.
+          Este niño no tiene tareas ni rutinas asignadas todavía.
         </div>
       )}
 
-      {dailyTasks.map((task, idx) => {
-        const Icon = getTaskIcon(task.icon);
+      {dailyItems.map((item, idx) => {
+        const Icon = getTaskIcon(item.icon);
+        const isRoutine = item.itemKind === "routine";
         return (
           <div
-            key={task.id}
+            key={`${item.itemKind}-${item.id}`}
             className={cn(
               "grid grid-cols-[300px_repeat(7,1fr)] border-b border-border/60 hover:bg-slate-50 transition-colors",
-              idx === dailyTasks.length - 1 && "border-b-2 border-primary/20",
+              idx === dailyItems.length - 1 && "border-b-2 border-primary/20",
             )}
           >
             <button
               type="button"
-              onClick={() => onEditTask(task)}
+              onClick={() => onEditItem(item)}
               className="p-4 flex w-full items-center gap-3 border-r border-border/60 text-left transition-colors hover:bg-primary/5"
             >
-              <div className="p-2 rounded-full bg-primary/10 text-primary">
+              <div
+                className={cn(
+                  "p-2 rounded-full",
+                  isRoutine ? "bg-emerald-100 text-emerald-700" : "bg-primary/10 text-primary",
+                )}
+              >
                 <Icon size={18} />
               </div>
               <div>
-                <div className="font-medium text-foreground">{task.title}</div>
-                {task.timeInfo && <div className="text-xs text-muted-foreground mt-0.5 font-medium">{task.timeInfo}</div>}
+                <div className="font-medium text-foreground">{item.title}</div>
+                {item.timeInfo && <div className="text-xs text-muted-foreground mt-0.5 font-medium">{item.timeInfo}</div>}
               </div>
             </button>
 
             {weekDates.map((date) => {
               const dateStr = format(date, "yyyy-MM-dd");
-              const checked = isCompleted(task.id, dateStr);
-              const required = isRequiredDay(task, date);
+              const checked = isCompleted(item.itemKind, item.id, dateStr);
+              const required = isRequiredDay(item, date);
 
               return (
                 <div key={dateStr} className="flex items-center justify-center border-r border-border/40 last:border-r-0">
                   <button
                     disabled={!required || isPending}
-                    onClick={() => required && onToggle(task.id, dateStr, checked)}
+                    onClick={() => required && onToggle(item.itemKind, item.id, dateStr, checked)}
                     className={cn(
                       "w-8 h-8 md:w-10 md:h-10 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
                       "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2",
@@ -304,43 +314,49 @@ export function WeeklyTable({
 
       {/* Weekly Tasks Section */}
       <div className="bg-secondary/30">
-        <div className="px-4 py-2 text-xs font-bold text-primary uppercase tracking-widest border-b border-border">Tareas Semanales</div>
+        <div className="px-4 py-2 text-xs font-bold text-primary uppercase tracking-widest border-b border-border">Tareas y Rutinas Semanales</div>
       </div>
 
-      {weeklyTasks.map((task, idx) => {
-        const Icon = getTaskIcon(task.icon);
+      {weeklyItems.map((item, idx) => {
+        const Icon = getTaskIcon(item.icon);
+        const isRoutine = item.itemKind === "routine";
         return (
           <div
-            key={task.id}
+            key={`${item.itemKind}-${item.id}`}
             className={cn(
               "grid grid-cols-[300px_repeat(7,1fr)] border-b border-border/60 hover:bg-slate-50 transition-colors",
-              idx === weeklyTasks.length - 1 && "border-b-0",
+              idx === weeklyItems.length - 1 && "border-b-0",
             )}
           >
             <button
               type="button"
-              onClick={() => onEditTask(task)}
+              onClick={() => onEditItem(item)}
               className="p-4 flex w-full items-center gap-3 border-r border-border/60 text-left transition-colors hover:bg-primary/5"
             >
-              <div className="p-2 rounded-full bg-orange-100 text-orange-600">
+              <div
+                className={cn(
+                  "p-2 rounded-full",
+                  isRoutine ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600",
+                )}
+              >
                 <Icon size={18} />
               </div>
               <div>
-                <div className="font-medium text-foreground">{task.title}</div>
-                {task.timeInfo && <div className="text-xs text-muted-foreground mt-0.5 font-medium">{task.timeInfo}</div>}
+                <div className="font-medium text-foreground">{item.title}</div>
+                {item.timeInfo && <div className="text-xs text-muted-foreground mt-0.5 font-medium">{item.timeInfo}</div>}
               </div>
             </button>
 
             {weekDates.map((date) => {
               const dateStr = format(date, "yyyy-MM-dd");
-              const checked = isCompleted(task.id, dateStr);
-              const required = isRequiredDay(task, date);
+              const checked = isCompleted(item.itemKind, item.id, dateStr);
+              const required = isRequiredDay(item, date);
 
               return (
                 <div key={dateStr} className="flex items-center justify-center border-r border-border/40 last:border-r-0 bg-slate-50/50">
                   <button
                     disabled={!required || isPending}
-                    onClick={() => required && onToggle(task.id, dateStr, checked)}
+                    onClick={() => required && onToggle(item.itemKind, item.id, dateStr, checked)}
                     className={cn(
                       "w-8 h-8 md:w-10 md:h-10 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
                       "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2",

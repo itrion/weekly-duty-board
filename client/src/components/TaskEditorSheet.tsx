@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { Kid, Task, UpdateTaskRequest } from "@shared/schema";
+import type {
+  BoardItemKind,
+  BoardItemWithAssignments,
+  Kid,
+  UpdateBoardItemRequest,
+} from "@shared/schema";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,13 +41,13 @@ const DAY_OPTIONS = [
 
 type TaskEditorSheetProps = {
   open: boolean;
-  task: Task | null;
+  item: BoardItemWithAssignments | null;
   kids: Kid[];
   assignedKidIds: number[];
   isSaving: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (taskId: number, data: UpdateTaskRequest) => Promise<void>;
-  onReplaceAssignments: (taskId: number, kidIds: number[]) => Promise<void>;
+  onSave: (itemKind: BoardItemKind, itemId: number, data: UpdateBoardItemRequest) => Promise<void>;
+  onReplaceAssignments: (itemKind: BoardItemKind, itemId: number, kidIds: number[]) => Promise<void>;
   onCreateKid: (name: string) => Promise<void>;
   onDeleteKid: (kidId: number) => Promise<void>;
 };
@@ -56,20 +61,20 @@ type TaskFormState = {
   icon: string;
 };
 
-function taskToForm(task: Task): TaskFormState {
+function itemToForm(item: BoardItemWithAssignments): TaskFormState {
   return {
-    title: task.title,
-    timeInfo: task.timeInfo ?? "",
-    type: task.type === "weekly" ? "weekly" : "daily",
-    requiredDays: [...task.requiredDays].sort((a, b) => a - b),
-    points: task.points,
-    icon: task.icon ?? "sparkles",
+    title: item.title,
+    timeInfo: item.timeInfo ?? "",
+    type: item.type === "weekly" ? "weekly" : "daily",
+    requiredDays: [...item.requiredDays].sort((a, b) => a - b),
+    points: item.points,
+    icon: item.icon ?? "sparkles",
   };
 }
 
 export function TaskEditorSheet({
   open,
-  task,
+  item,
   kids,
   assignedKidIds,
   isSaving,
@@ -87,17 +92,17 @@ export function TaskEditorSheet({
   const [selectedKidIds, setSelectedKidIds] = useState<number[]>([]);
 
   useEffect(() => {
-    if (!task) {
+    if (!item) {
       setForm(null);
       setError(null);
       setIconQuery("");
       return;
     }
-    setForm(taskToForm(task));
+    setForm(itemToForm(item));
     setError(null);
     setIconQuery("");
     setSelectedKidIds(assignedKidIds);
-  }, [task]);
+  }, [item, assignedKidIds]);
 
   useEffect(() => {
     setSelectedKidIds(assignedKidIds);
@@ -151,7 +156,7 @@ export function TaskEditorSheet({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!task || !form) return;
+    if (!item || !form) return;
 
     const title = form.title.trim();
     if (!title) {
@@ -168,7 +173,7 @@ export function TaskEditorSheet({
       return;
     }
 
-    const payload: UpdateTaskRequest = {
+    const payload: UpdateBoardItemRequest = {
       title,
       timeInfo: form.timeInfo.trim() ? form.timeInfo.trim() : null,
       type: form.type,
@@ -178,11 +183,11 @@ export function TaskEditorSheet({
     };
 
     try {
-      await onSave(task.id, payload);
-      await onReplaceAssignments(task.id, selectedKidIds);
+      await onSave(item.itemKind, item.id, payload);
+      await onReplaceAssignments(item.itemKind, item.id, selectedKidIds);
       setError(null);
     } catch (_err) {
-      setError("No se pudo guardar la tarea.");
+      setError("No se pudo guardar.");
     }
   };
 
@@ -219,10 +224,10 @@ export function TaskEditorSheet({
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <SelectedIcon className="h-4 w-4" />
               </span>
-              Editar Tarea
+              {item?.itemKind === "routine" ? "Editar Rutina" : "Editar Tarea"}
             </SheetTitle>
             <SheetDescription>
-              Cambia los campos y guarda para actualizar la tarea en la base de datos.
+              Cambia los campos y guarda para actualizar este elemento del tablero.
             </SheetDescription>
           </SheetHeader>
 

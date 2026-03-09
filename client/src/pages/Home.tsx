@@ -4,8 +4,8 @@ import {
   useKids,
   useCompletions,
   useToggleCompletion,
-  useUpdateTask,
-  useReplaceTaskAssignments,
+  useUpdateBoardItem,
+  useReplaceBoardItemAssignments,
   useCreateKid,
   useUpdateKid,
   useDeleteKid,
@@ -22,12 +22,16 @@ import {
 } from "@/components/ui/dialog";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import type { TaskWithAssignments, UpdateTaskRequest } from "@shared/schema";
+import type {
+  BoardItemWithAssignments,
+  BoardItemKind,
+  UpdateBoardItemRequest,
+} from "@shared/schema";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedKidId, setSelectedKidId] = useState<number | undefined>(undefined);
-  const [editingTask, setEditingTask] = useState<TaskWithAssignments | null>(null);
+  const [editingItem, setEditingItem] = useState<BoardItemWithAssignments | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false);
 
@@ -39,11 +43,11 @@ export default function Home() {
 
   // Queries
   const { data: kids, isLoading: kidsLoading } = useKids();
-  const { data: tasks, isLoading: tasksLoading } = useTasks(selectedKidId);
+  const { data: items, isLoading: itemsLoading } = useTasks(selectedKidId);
   const { data: completions } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
-  const { mutateAsync: updateTask, isPending: isUpdatingTask } = useUpdateTask();
-  const { mutateAsync: replaceAssignments } = useReplaceTaskAssignments();
+  const { mutateAsync: updateBoardItem, isPending: isUpdatingItem } = useUpdateBoardItem();
+  const { mutateAsync: replaceAssignments } = useReplaceBoardItemAssignments();
   const { mutateAsync: createKid, isPending: isCreatingKid } = useCreateKid();
   const { mutateAsync: updateKid, isPending: isUpdatingKid } = useUpdateKid();
   const { mutateAsync: deleteKid } = useDeleteKid();
@@ -55,18 +59,18 @@ export default function Home() {
   }, [kids, selectedKidId]);
 
   const totalPointsPossible = useMemo(() => {
-    if (!tasks || tasks.length === 0) return 0;
+    if (!items || items.length === 0) return 0;
 
     const weekDates = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 
-    return tasks.reduce((total, task) => {
+    return items.reduce((total, item) => {
       const occurrences = weekDates.reduce((count, date) => {
-        return count + (task.requiredDays.includes(date.getDay()) ? 1 : 0);
+        return count + (item.requiredDays.includes(date.getDay()) ? 1 : 0);
       }, 0);
 
-      return total + occurrences * task.points;
+      return total + occurrences * item.points;
     }, 0);
-  }, [tasks, weekStart]);
+  }, [items, weekStart]);
 
   const handlePrint = () => {
     window.print();
@@ -85,22 +89,30 @@ export default function Home() {
       ? `${format(weekStart, "d MMM", { locale: es })} - ${format(weekEnd, "d MMM yyyy", { locale: es })}`
       : `${format(weekStart, "d MMM yyyy", { locale: es })} - ${format(weekEnd, "d MMM yyyy", { locale: es })}`;
 
-  const handleToggle = (taskId: number, date: string, completed: boolean) => {
-    toggleTask({ taskId, date, completed: !completed });
+  const handleToggle = (itemKind: BoardItemKind, itemId: number, date: string, completed: boolean) => {
+    toggleTask({ itemKind, itemId, date, completed: !completed });
   };
 
-  const handleEditTask = (task: TaskWithAssignments) => {
-    setEditingTask(task);
+  const handleEditItem = (item: BoardItemWithAssignments) => {
+    setEditingItem(item);
     setIsEditorOpen(true);
   };
 
-  const handleSaveTask = async (taskId: number, data: UpdateTaskRequest) => {
-    await updateTask({ taskId, data });
+  const handleSaveItem = async (
+    itemKind: BoardItemKind,
+    itemId: number,
+    data: UpdateBoardItemRequest,
+  ) => {
+    await updateBoardItem({ itemKind, itemId, data });
     setIsEditorOpen(false);
   };
 
-  const handleReplaceAssignments = async (taskId: number, kidIds: number[]) => {
-    await replaceAssignments({ taskId, data: { kidIds } });
+  const handleReplaceAssignments = async (
+    itemKind: BoardItemKind,
+    itemId: number,
+    kidIds: number[],
+  ) => {
+    await replaceAssignments({ itemKind, itemId, data: { kidIds } });
   };
 
   const handleCreateKid = async () => {
@@ -121,7 +133,7 @@ export default function Home() {
     await updateKid({ kidId, data: { name } });
   };
 
-  if (tasksLoading || kidsLoading) {
+  if (itemsLoading || kidsLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
@@ -138,7 +150,7 @@ export default function Home() {
         {/* Header Section */}
         <header className="mb-2">
           <h1 className="text-xl md:text-2xl font-display font-bold text-primary uppercase tracking-wider">
-            Tabla de tareas
+            Tabla de tareas y rutinas
           </h1>
         </header>
 
@@ -146,7 +158,7 @@ export default function Home() {
         <main className="space-y-6 print:space-y-4">
           <section className="print-avoid-break">
             <WeeklyTable
-              tasks={tasks || []}
+              items={items || []}
               completions={completions || []}
               kids={kids || []}
               selectedKidId={selectedKidId}
@@ -162,7 +174,7 @@ export default function Home() {
               onOpenWeekPicker={() => setIsWeekPickerOpen(true)}
               onPrint={handlePrint}
               onToggle={handleToggle}
-              onEditTask={handleEditTask}
+              onEditItem={handleEditItem}
               isPending={isToggling}
             />
           </section>
@@ -175,15 +187,15 @@ export default function Home() {
 
       <TaskEditorSheet
         open={isEditorOpen}
-        task={editingTask}
-        isSaving={isUpdatingTask}
+        item={editingItem}
+        isSaving={isUpdatingItem}
         kids={kids ?? []}
-        assignedKidIds={editingTask?.kidIds ?? (selectedKidId ? [selectedKidId] : [])}
+        assignedKidIds={editingItem?.kidIds ?? (selectedKidId ? [selectedKidId] : [])}
         onOpenChange={(open) => {
           setIsEditorOpen(open);
-          if (!open) setEditingTask(null);
+          if (!open) setEditingItem(null);
         }}
-        onSave={handleSaveTask}
+        onSave={handleSaveItem}
         onReplaceAssignments={handleReplaceAssignments}
         onCreateKid={async (name) => {
           await createKid({ name });

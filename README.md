@@ -54,23 +54,26 @@ Preferred communication style: Simple, everyday language.
 - **Schema location**: `shared/schema.ts` (shared between client and server)
 - **Migrations**: Drizzle Kit with versioned SQL migrations (`db:migrate`)
 - **Tables**:
-  - `tasks` — stores task definitions (title, time info, type daily/weekly, required days as JSONB array, icon name, points value)
+  - `tasks` — stores task definitions
+  - `routines` — stores routine definitions (`completion_mode` currently `all_or_nothing`)
   - `kids` — stores kid profiles for independent assignment
-  - `task_assignments` — maps tasks to one or more kids
-  - `completions` — stores task completion records (task ID, date as `YYYY-MM-DD` string, completed boolean)
+  - `task_assignments` — maps tasks to kids
+  - `routine_assignments` — maps routines to kids
+  - `completions` — stores completion records for tasks or routines (date as `YYYY-MM-DD` string)
 
 ### API Endpoints
 
 | Method | Path                                   | Purpose                                 |
 | ------ | -------------------------------------- | --------------------------------------- |
-| GET    | `/api/tasks?kidId=`                    | List tasks (optionally filtered by kid) |
-| PUT    | `/api/tasks/:id/assignments`           | Replace kid assignments for a task      |
+| GET    | `/api/board-items?kidId=`              | List board items (tasks + routines)     |
+| PATCH  | `/api/board-items/:kind/:id`           | Update one task/routine                 |
+| PUT    | `/api/board-items/:kind/:id/assignments` | Replace kid assignments for item      |
 | GET    | `/api/kids`                            | List kids                               |
 | POST   | `/api/kids`                            | Create kid                              |
 | PATCH  | `/api/kids/:id`                        | Update kid                              |
 | DELETE | `/api/kids/:id`                        | Remove kid                              |
 | GET    | `/api/completions?startDate=&endDate=` | Get completions for date range          |
-| POST   | `/api/completions`                     | Toggle a task's completion status       |
+| POST   | `/api/completions`                     | Toggle completion status (task/routine) |
 
 ### Project Structure
 
