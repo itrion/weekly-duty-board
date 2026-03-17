@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   useCreateBoardItem,
+  useReorderBoardItems,
   useTasks,
   useKids,
   useCompletions,
@@ -48,6 +49,7 @@ export default function Home() {
   const { data: completions } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
   const { mutateAsync: createBoardItem, isPending: isCreatingItem } = useCreateBoardItem();
+  const { mutateAsync: reorderBoardItems, isPending: isReorderingItems } = useReorderBoardItems();
   const { mutateAsync: updateBoardItem, isPending: isUpdatingItem } = useUpdateBoardItem();
   const { mutateAsync: replaceAssignments } = useReplaceBoardItemAssignments();
   const { mutateAsync: createKid, isPending: isCreatingKid } = useCreateKid();
@@ -126,6 +128,18 @@ export default function Home() {
     setIsEditorOpen(false);
   };
 
+  const handleReorderItems = async (
+    type: "daily" | "weekly",
+    orderedItems: Array<{ itemKind: BoardItemKind; itemId: number }>,
+  ) => {
+    if (!selectedKidId) return;
+    await reorderBoardItems({
+      kidId: selectedKidId,
+      type,
+      orderedItems,
+    });
+  };
+
   const handleCreateKid = async () => {
     const existingNames = new Set((kids ?? []).map((kid) => kid.name.toLowerCase()));
     let suffix = (kids?.length ?? 0) + 1;
@@ -157,17 +171,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 print:pb-0">
-      <div className="print-container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 print:max-w-none print:pt-0">
+      <div className="print-page print-container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 print:max-w-none print:pt-0">
         {/* Header Section */}
-        <header className="mb-2">
-          <h1 className="text-xl md:text-2xl font-display font-bold text-primary uppercase tracking-wider">
+        <header className="mb-2 print:mb-1">
+          <h1 className="text-xl md:text-2xl font-display font-bold text-primary uppercase tracking-wider print:text-lg">
             Tabla de tareas y rutinas
           </h1>
         </header>
 
         {/* Main Content */}
-        <main className="space-y-6 print:space-y-4">
-          <section className="print-avoid-break">
+        <main className="space-y-6 print:h-full print:space-y-0">
+          <section className="print-avoid-break print:h-full">
             <WeeklyTable
               items={items || []}
               completions={completions || []}
@@ -186,8 +200,9 @@ export default function Home() {
               onOpenWeekPicker={() => setIsWeekPickerOpen(true)}
               onPrint={handlePrint}
               onToggle={handleToggle}
+              onReorderItems={handleReorderItems}
               onEditItem={handleEditItem}
-              isPending={isToggling}
+              isPending={isToggling || isReorderingItems}
             />
           </section>
         </main>

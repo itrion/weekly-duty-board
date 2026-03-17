@@ -96,6 +96,29 @@
     padding: 0 !important;
   }
 
+  .print-page {
+    height: 190mm;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    row-gap: 2mm;
+  }
+
+  .print-page > main {
+    min-height: 0;
+  }
+
+  .board-print-shell {
+    width: 100% !important;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .board-print-frame {
+    transform: scale(var(--board-print-scale, 1));
+    transform-origin: top left;
+    width: calc(100% / var(--board-print-scale, 1));
+  }
+
   /* Keep sections together across page breaks */
   .print-avoid-break {
     break-inside: avoid;

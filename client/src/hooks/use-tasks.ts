@@ -3,12 +3,26 @@ import { api, buildUrl } from "@shared/routes";
 import type {
   CreateBoardItemRequest,
   CreateKidRequest,
+  ReorderBoardItemsRequest,
   ReplaceBoardItemAssignmentsRequest,
   ToggleBoardItemRequest,
   UpdateBoardItemRequest,
   UpdateKidRequest,
   BoardItemKind,
 } from "@shared/schema";
+
+async function getErrorMessage(res: Response, fallback: string) {
+  try {
+    const payload = await res.json();
+    if (typeof payload?.message === "string") {
+      return payload.message;
+    }
+  } catch {
+    // Ignore malformed error bodies and fall back to a generic message.
+  }
+
+  return fallback;
+}
 
 export function useTasks(kidId?: number) {
   return useQuery({
@@ -34,8 +48,31 @@ export function useCreateBoardItem() {
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create board item");
+      if (!res.ok) {
+        throw new Error(await getErrorMessage(res, "No se pudo crear el elemento."));
+      }
       return api.board.create.responses[201].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.board.list.path] });
+    },
+  });
+}
+
+export function useReorderBoardItems() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: ReorderBoardItemsRequest) => {
+      const validated = api.board.reorder.input.parse(data);
+      const res = await fetch(api.board.reorder.path, {
+        method: api.board.reorder.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to reorder board items");
+      return api.board.reorder.responses[200].parse(await res.json());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.board.list.path] });
@@ -88,7 +125,9 @@ export function useUpdateBoardItem() {
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to update board item");
+      if (!res.ok) {
+        throw new Error(await getErrorMessage(res, "No se pudo actualizar el elemento."));
+      }
       return api.board.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
@@ -117,7 +156,9 @@ export function useReplaceBoardItemAssignments() {
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to replace board item assignments");
+      if (!res.ok) {
+        throw new Error(await getErrorMessage(res, "No se pudieron actualizar las asignaciones."));
+      }
       return api.board.replaceAssignments.responses[200].parse(await res.json());
     },
     onSuccess: () => {
