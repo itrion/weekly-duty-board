@@ -9,35 +9,30 @@
 - Motivation, context, and reasoning for the change
 
 ### How was this tested?
-- Description of testing approach
-- Commands to run tests: `npm test`, `npm run lint`
-- Manual testing steps performed
-- Test coverage information
+- List only checks that were actually run
+- Record pass/fail or "not defined" for relevant scripts
+- Add manual testing only if it actually happened
 
 ### Breaking Changes
-- List any breaking changes introduced
-- Migration instructions for users
-- Deprecation notices if applicable
+- State "None" if there are no breaking changes
+- Otherwise list the contract/setup/schema changes and any migration steps
 
 ### Related Issues & PRs
-- Closes #123
-- Related to #456
-- Supersedes #789
+- Add real issue or PR references only if they exist
+- Remove this section if there are none
 
 ### Screenshots/Videos (if applicable)
-- Add screenshots or videos for UI/UX changes
-- Before/after comparisons
+- Include only when available and useful for review
 
-### Checklist
-- [ ] Code follows project style guidelines
-- [ ] Tests added/updated and passing
-- [ ] Documentation updated
-- [ ] Breaking changes documented
-- [ ] Reviewed by at least one team member
-- [ ] Ready for merge
+### Validation
+- `npm run check`: pass/fail/not defined
+- `npm run lint`: pass/fail/not defined
+- `npm test`: pass/fail/not defined
+- `npm run build`: pass/fail/not defined
+- Manual testing: performed / not performed
 
-### Additional Notes
-- Any additional context or considerations
-- Performance implications
-- Security considerations
-- Future improvements or follow-up work
+### Risks / Follow-ups
+- Known gaps, tradeoffs, or follow-up work
+
+### Review Notes
+- Reviewer guidance for large or sensitive changes
