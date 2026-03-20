@@ -43,14 +43,13 @@ Run the following checks in sequence. Skip missing scripts with warnings, but st
 ### 4. PR Drafting
 
 - Read the PR template from `assets/pr-template.md`
-- Infer related issues from commit messages (e.g., "Closes #123", "Fixes #456")
-- Propose PR labels based on change categorization (e.g., feature → enhancement, bug fix → bug)
-- Prompt user for:
-  - PR title (suggest format: [Type]: description)
-  - Detailed description sections
-  - Breaking changes
-  - Screenshots/videos if applicable
-- Fill in the template with user input and inferred information
+- Infer PR title from the latest commit message (e.g., "feat: add X" → "[Feature]: Add X")
+- Infer description by summarizing git diff against origin/main
+- Infer related issues from commit messages (e.g., "Closes #123")
+- Infer PR labels based on commit types (feat → enhancement, fix → bug, docs → documentation)
+- Auto-fill breaking changes by checking for API/schema changes in diff
+- Skip screenshots/videos unless explicitly needed (assume none for autonomy)
+- Fill in testing section with available scripts and build success
 
 ### 5. PR Submission
 
@@ -72,4 +71,4 @@ Run the following checks in sequence. Skip missing scripts with warnings, but st
 
 Invoke with: `/pr-creation`
 
-The skill will guide you through each step, asking for input where needed.
+The skill will autonomously validate, update, draft, and open the PR without user input.
