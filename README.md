@@ -49,28 +49,25 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage
 
-- **Database**: PostgreSQL (required, via `DATABASE_URL` environment variable)
-- **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-Zod conversion
-- **Schema location**: `shared/schema.ts` (shared between client and server)
-- **Migrations**: Drizzle Kit with versioned SQL migrations (`db:migrate`)
+- **Persistence**: JSON file on local filesystem (`DATA_STORE_PATH`, default `data/store.json`)
+- **Storage layer**: `server/storage.ts` (atomic read/write and seeded defaults on first boot)
 - **Tables**:
-  - `tasks` — stores task definitions (title, time info, type daily/weekly, required days as JSONB array, icon name, points value)
-  - `kids` — stores kid profiles for independent assignment
-  - `task_assignments` — maps tasks to one or more kids
-  - `completions` — stores task completion records (task ID, date as `YYYY-MM-DD` string, completed boolean)
+  - Logical entities are still the same (`tasks`, `routines`, `kids`, assignments, completions), but stored in one JSON document.
 
 ### API Endpoints
 
 | Method | Path                                   | Purpose                                 |
 | ------ | -------------------------------------- | --------------------------------------- |
-| GET    | `/api/tasks?kidId=`                    | List tasks (optionally filtered by kid) |
-| PUT    | `/api/tasks/:id/assignments`           | Replace kid assignments for a task      |
+| POST   | `/api/board-items`                     | Create task/routine and assign kids     |
+| GET    | `/api/board-items?kidId=`              | List board items (tasks + routines)     |
+| PATCH  | `/api/board-items/:kind/:id`           | Update one task/routine                 |
+| PUT    | `/api/board-items/:kind/:id/assignments` | Replace kid assignments for item      |
 | GET    | `/api/kids`                            | List kids                               |
 | POST   | `/api/kids`                            | Create kid                              |
 | PATCH  | `/api/kids/:id`                        | Update kid                              |
 | DELETE | `/api/kids/:id`                        | Remove kid                              |
 | GET    | `/api/completions?startDate=&endDate=` | Get completions for date range          |
-| POST   | `/api/completions`                     | Toggle a task's completion status       |
+| POST   | `/api/completions`                     | Toggle completion status (task/routine) |
 
 ### Project Structure
 
@@ -85,12 +82,11 @@ client/           → React frontend
 server/           → Express backend
   index.ts        → Server entry point
   routes.ts       → API route handlers
-  storage.ts      → Database storage layer (implements IStorage interface)
-  db.ts           → Drizzle/PostgreSQL connection
+  storage.ts      → JSON file storage layer (implements IStorage interface)
   vite.ts         → Vite dev middleware setup
   static.ts       → Production static file serving
 shared/           → Code shared between client and server
-  schema.ts       → Drizzle database schema + Zod types
+  schema.ts       → Shared data contracts + Zod types
   routes.ts       → API route contracts (paths, methods, Zod schemas)
 ```
 
@@ -98,45 +94,25 @@ shared/           → Code shared between client and server
 
 - **Shared schema and routes**: The `shared/` directory contains both the database schema and API route contracts, ensuring type safety across the full stack
 - **Storage interface pattern**: `IStorage` interface in `storage.ts` abstracts database operations, making it possible to swap implementations
-- **Seeding source**: Default tasks, default kid, and default assignments are seeded via versioned Drizzle migrations
+- **Seeding source**: Default tasks, routine, kid, and assignments are seeded into `data/store.json` on first run
 - **Date strings**: Completions use `YYYY-MM-DD` string format for dates rather than timestamp columns, simplifying day-level queries
 - **Print support**: CSS `@media print` rules are critical — the app is designed to be printed and posted on a fridge
 
 ## External Dependencies
 
-- **PostgreSQL**: Required. Connection via `DATABASE_URL` environment variable. Used with `pg` (node-postgres) driver and Drizzle ORM.
+- **No database required**: all runtime data is persisted in JSON on disk.
 - **Google Fonts**: Inter, Outfit, DM Sans, Fira Code, Geist Mono, Architects Daughter loaded via CDN
 - **No authentication**: The app currently has no auth system — it's a simple family tool
 - **Replit plugins**: `@replit/vite-plugin-runtime-error-modal`, `@replit/vite-plugin-cartographer`, `@replit/vite-plugin-dev-banner` used in development
 
-## Local Postgres with Docker Compose
-
-This repo includes a `docker-compose.yml` that starts PostgreSQL and seeds the default tasks.
+## Local Run
 
 1. Copy environment file:
    - `cp .env.example .env`
-2. Start DB:
-   - `npm run db:up`
-3. Run app:
+2. Run app:
    - `npm run dev`
 
-Or run both DB + app in Docker (code is bind-mounted, no image build step):
+Or run in Docker (code is bind-mounted, no image build step):
 
-- `docker compose up -d db app`
+- `docker compose up -d app`
 - Open `http://localhost:5001`
-
-Schema and seed data are applied by Drizzle migrations via bootstrap:
-
-- `npm run bootstrap`
-
-If you need to re-run the init seed from scratch, remove the volume and recreate:
-
-- `npm run db:reset`
-
-## Drizzle Workflow (Required)
-
-- `shared/schema.ts` is the source of truth for schema definitions.
-- After schema changes, run `drizzle-kit generate` to create a new migration by diff.
-- Apply migrations with `npm run db:migrate` (or `npm run bootstrap`).
-- Commit schema changes and migration files together.
-- Avoid `db:push` in normal team workflows; use migration files as the canonical history.

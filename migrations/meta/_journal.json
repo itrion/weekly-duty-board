@@ -15,6 +15,13 @@
       "when": 1772880473668,
       "tag": "0001_seed_initial_data",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772929183735,
+      "tag": "0002_spotty_husk",
+      "breakpoints": true
     }
   ]
 }

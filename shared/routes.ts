@@ -2,13 +2,17 @@
 import { z } from 'zod';
 import {
   tasks,
+  routines,
   completions,
   kids,
-  updateTaskSchema,
+  boardItemKindSchema,
+  createBoardItemSchema,
+  reorderBoardItemsSchema,
+  updateBoardItemSchema,
   createKidSchema,
   updateKidSchema,
-  replaceTaskAssignmentsSchema,
-  taskWithAssignmentsSchema,
+  replaceBoardItemAssignmentsSchema,
+  boardItemWithAssignmentsSchema,
 } from './schema';
 
 export const errorSchemas = {
@@ -25,33 +29,58 @@ export const errorSchemas = {
 };
 
 export const api = {
-  tasks: {
+  board: {
+    create: {
+      method: 'POST' as const,
+      path: '/api/board-items' as const,
+      input: createBoardItemSchema,
+      responses: {
+        201: z.union([
+          z.custom<typeof tasks.$inferSelect>(),
+          z.custom<typeof routines.$inferSelect>(),
+        ]),
+      },
+    },
     list: {
       method: 'GET' as const,
-      path: '/api/tasks' as const,
+      path: '/api/board-items' as const,
       input: z.object({
         kidId: z.coerce.number().int().positive().optional(),
       }),
       responses: {
-        200: z.array(taskWithAssignmentsSchema),
+        200: z.array(boardItemWithAssignmentsSchema),
       },
     },
     update: {
       method: 'PATCH' as const,
-      path: '/api/tasks/:id' as const,
-      input: updateTaskSchema,
+      path: '/api/board-items/:kind/:id' as const,
+      input: updateBoardItemSchema,
       responses: {
-        200: z.custom<typeof tasks.$inferSelect>(),
+        200: z.union([
+          z.custom<typeof tasks.$inferSelect>(),
+          z.custom<typeof routines.$inferSelect>(),
+        ]),
       },
     },
     replaceAssignments: {
       method: 'PUT' as const,
-      path: '/api/tasks/:id/assignments' as const,
-      input: replaceTaskAssignmentsSchema,
+      path: '/api/board-items/:kind/:id/assignments' as const,
+      input: replaceBoardItemAssignmentsSchema,
       responses: {
         200: z.object({
-          taskId: z.number(),
+          itemKind: boardItemKindSchema,
+          itemId: z.number(),
           kidIds: z.array(z.number()),
+        }),
+      },
+    },
+    reorder: {
+      method: 'POST' as const,
+      path: '/api/board-items/reorder' as const,
+      input: reorderBoardItemsSchema,
+      responses: {
+        200: z.object({
+          ok: z.literal(true),
         }),
       },
     },
@@ -104,7 +133,8 @@ export const api = {
       method: 'POST' as const,
       path: '/api/completions' as const,
       input: z.object({
-        taskId: z.number(),
+        itemKind: boardItemKindSchema,
+        itemId: z.number(),
         date: z.string(),
         completed: z.boolean(),
       }),

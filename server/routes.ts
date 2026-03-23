@@ -3,6 +3,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
+import { boardItemKindSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -10,31 +11,11 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.get(api.tasks.list.path, async (req, res) => {
-    const parsed = api.tasks.list.input.safeParse(req.query);
-    if (!parsed.success) {
-      return res.status(400).json({ message: "Invalid kid filter" });
-    }
-
-    const tasks = await storage.getTasks(parsed.data.kidId);
-    res.json(tasks);
-  });
-
-  app.patch(api.tasks.update.path, async (req, res) => {
-    const taskId = Number(req.params.id);
-    if (!Number.isInteger(taskId) || taskId < 1) {
-      return res.status(400).json({ message: "Invalid task id" });
-    }
-
+  app.post(api.board.create.path, async (req, res) => {
     try {
-      const input = api.tasks.update.input.parse(req.body);
-      const updatedTask = await storage.updateTask(taskId, input);
-
-      if (!updatedTask) {
-        return res.status(404).json({ message: "Task not found" });
-      }
-
-      res.json(updatedTask);
+      const input = api.board.create.input.parse(req.body);
+      const createdItem = await storage.createBoardItem(input);
+      res.status(201).json(createdItem);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors });
@@ -43,17 +24,52 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.tasks.replaceAssignments.path, async (req, res) => {
-    const taskId = Number(req.params.id);
-    if (!Number.isInteger(taskId) || taskId < 1) {
-      return res.status(400).json({ message: "Invalid task id" });
+  app.get(api.board.list.path, async (req, res) => {
+    const parsed = api.board.list.input.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid kid filter" });
+    }
+
+    const boardItems = await storage.getBoardItems(parsed.data.kidId);
+    res.json(boardItems);
+  });
+
+  app.patch(api.board.update.path, async (req, res) => {
+    const itemId = Number(req.params.id);
+    if (!Number.isInteger(itemId) || itemId < 1) {
+      return res.status(400).json({ message: "Invalid board item id" });
     }
 
     try {
-      const input = api.tasks.replaceAssignments.input.parse(req.body);
-      const result = await storage.replaceTaskAssignments(taskId, input);
+      const itemKind = boardItemKindSchema.parse(req.params.kind);
+      const input = api.board.update.input.parse(req.body);
+      const updatedItem = await storage.updateBoardItem(itemKind, itemId, input);
+
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Board item not found" });
+      }
+
+      res.json(updatedItem);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors });
+      }
+      throw err;
+    }
+  });
+
+  app.put(api.board.replaceAssignments.path, async (req, res) => {
+    const itemId = Number(req.params.id);
+    if (!Number.isInteger(itemId) || itemId < 1) {
+      return res.status(400).json({ message: "Invalid board item id" });
+    }
+
+    try {
+      const itemKind = boardItemKindSchema.parse(req.params.kind);
+      const input = api.board.replaceAssignments.input.parse(req.body);
+      const result = await storage.replaceBoardItemAssignments(itemKind, itemId, input);
       if (!result) {
-        return res.status(404).json({ message: "Task not found" });
+        return res.status(404).json({ message: "Board item not found" });
       }
       res.json(result);
     } catch (err) {
@@ -61,6 +77,19 @@ export async function registerRoutes(
         return res.status(400).json({ message: err.errors });
       }
       throw err;
+    }
+  });
+
+  app.post(api.board.reorder.path, async (req, res) => {
+    try {
+      const input = api.board.reorder.input.parse(req.body);
+      await storage.reorderBoardItems(input);
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors });
+      }
+      return res.status(400).json({ message: "Could not reorder board items" });
     }
   });
 
