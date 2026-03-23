@@ -37,6 +37,7 @@ export interface IStorage {
   createBoardItem(data: CreateBoardItemRequest): Promise<Task | Routine>;
   getBoardItems(kidId?: number): Promise<BoardItemWithAssignments[]>;
   updateBoardItem(itemKind: BoardItemKind, itemId: number, data: UpdateBoardItemRequest): Promise<Task | Routine | null>;
+  deleteBoardItem(itemKind: BoardItemKind, itemId: number): Promise<boolean>;
   getKids(): Promise<Kid[]>;
   createKid(data: CreateKidRequest): Promise<Kid>;
   updateKid(kidId: number, data: UpdateKidRequest): Promise<Kid | null>;
@@ -221,6 +222,22 @@ export class DatabaseStorage implements IStorage {
 
     const [updated] = await db.update(routines).set(data).where(eq(routines.id, itemId)).returning();
     return updated ?? null;
+  }
+
+  async deleteBoardItem(itemKind: BoardItemKind, itemId: number): Promise<boolean> {
+    return await db.transaction(async (tx) => {
+      if (itemKind === "task") {
+        await tx.delete(taskAssignments).where(eq(taskAssignments.taskId, itemId));
+        await tx.delete(completions).where(eq(completions.taskId, itemId));
+        const deleted = await tx.delete(tasks).where(eq(tasks.id, itemId)).returning({ id: tasks.id });
+        return deleted.length > 0;
+      }
+
+      await tx.delete(routineAssignments).where(eq(routineAssignments.routineId, itemId));
+      await tx.delete(completions).where(eq(completions.routineId, itemId));
+      const deleted = await tx.delete(routines).where(eq(routines.id, itemId)).returning({ id: routines.id });
+      return deleted.length > 0;
+    });
   }
 
   async getKids(): Promise<Kid[]> {

@@ -10,6 +10,19 @@ import type {
   BoardItemKind,
 } from "@shared/schema";
 
+async function getErrorMessage(res: Response, fallback: string) {
+  try {
+    const data = await res.json();
+    if (typeof data?.message === "string") {
+      return data.message;
+    }
+  } catch {
+    // Ignore invalid or empty error responses and use the fallback message.
+  }
+
+  return fallback;
+}
+
 export function useTasks(kidId?: number) {
   return useQuery({
     queryKey: [api.board.list.path, kidId ?? "all"],
@@ -64,6 +77,28 @@ export function useCompletions(startDate: string, endDate: string) {
       return api.completions.list.responses[200].parse(await res.json());
     },
     enabled: !!startDate && !!endDate,
+  });
+}
+
+export function useDeleteBoardItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itemKind, itemId }: { itemKind: BoardItemKind; itemId: number }) => {
+      const url = buildUrl(api.board.remove.path, { kind: itemKind, id: itemId });
+      const res = await fetch(url, {
+        method: api.board.remove.method,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error(await getErrorMessage(res, "No se pudo eliminar el elemento."));
+      }
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.board.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.completions.list.path] });
+    },
   });
 }
 

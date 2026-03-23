@@ -61,6 +61,13 @@ export const api = {
         ]),
       },
     },
+    remove: {
+      method: 'DELETE' as const,
+      path: '/api/board-items/:kind/:id' as const,
+      responses: {
+        204: z.object({}),
+      },
+    },
     replaceAssignments: {
       method: 'PUT' as const,
       path: '/api/board-items/:kind/:id/assignments' as const,
