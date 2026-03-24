@@ -219,8 +219,8 @@ export function TaskEditorSheet({
         });
       }
       setError(null);
-    } catch (_err) {
-      setError("No se pudo guardar.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar.");
     }
   };
 
@@ -234,8 +234,8 @@ export function TaskEditorSheet({
       await onCreateKid(name);
       setNewKidName("");
       setError(null);
-    } catch (_err) {
-      setError("No se pudo crear el niño.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear el niño.");
     }
   };
 

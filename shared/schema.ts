@@ -61,6 +61,7 @@ export const taskAssignments = pgTable(
     id: serial("id").primaryKey(),
     taskId: integer("task_id").notNull(),
     kidId: integer("kid_id").notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -74,6 +75,7 @@ export const routineAssignments = pgTable(
     id: serial("id").primaryKey(),
     routineId: integer("routine_id").notNull(),
     kidId: integer("kid_id").notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -111,6 +113,16 @@ export const createBoardItemSchema = updateBoardItemSchema.extend({
   itemKind: boardItemKindSchema,
   kidIds: z.array(z.number().int().positive()),
 });
+export const reorderBoardItemsSchema = z.object({
+  kidId: z.number().int().positive(),
+  type: cadenceSchema,
+  orderedItems: z.array(
+    z.object({
+      itemKind: boardItemKindSchema,
+      itemId: z.number().int().positive(),
+    }),
+  ),
+});
 export const boardItemWithAssignmentsSchema = z.object({
   id: z.number(),
   itemKind: boardItemKindSchema,
@@ -121,6 +133,7 @@ export const boardItemWithAssignmentsSchema = z.object({
   icon: z.string().nullable(),
   points: z.number().int(),
   kidIds: z.array(z.number().int().positive()),
+  sortOrder: z.number().int(),
 });
 export const taskWithAssignmentsSchema = boardItemWithAssignmentsSchema;
 
@@ -143,6 +156,7 @@ export type UpdateKidRequest = z.infer<typeof updateKidSchema>;
 export type ReplaceBoardItemAssignmentsRequest = z.infer<typeof replaceBoardItemAssignmentsSchema>;
 export type ReplaceTaskAssignmentsRequest = ReplaceBoardItemAssignmentsRequest;
 export type CreateBoardItemRequest = z.infer<typeof createBoardItemSchema>;
+export type ReorderBoardItemsRequest = z.infer<typeof reorderBoardItemsSchema>;
 export type BoardItemWithAssignments = z.infer<typeof boardItemWithAssignmentsSchema>;
 export type TaskWithAssignments = BoardItemWithAssignments;
 export type BoardItemKind = z.infer<typeof boardItemKindSchema>;

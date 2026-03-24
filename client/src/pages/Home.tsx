@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   useCreateBoardItem,
+  useDeleteBoardItem,
+  useReorderBoardItems,
   useTasks,
   useKids,
   useCompletions,
@@ -9,7 +11,6 @@ import {
   useReplaceBoardItemAssignments,
   useCreateKid,
   useUpdateKid,
-  useDeleteBoardItem,
 } from "@/hooks/use-tasks";
 import { WeeklyTable } from "@/components/WeeklyTable";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
@@ -45,16 +46,19 @@ export default function Home() {
   const tableSectionRef = useRef<HTMLElement | null>(null);
   const [tableHeight, setTableHeight] = useState<number | null>(null);
 
+  // Date calculations
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const startDateStr = format(weekStart, "yyyy-MM-dd");
   const endDateStr = format(weekEnd, "yyyy-MM-dd");
 
+  // Queries
   const { data: kids, isLoading: kidsLoading } = useKids();
   const { data: items, isLoading: itemsLoading } = useTasks(selectedKidId);
   const { data: completions } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
   const { mutateAsync: createBoardItem, isPending: isCreatingItem } = useCreateBoardItem();
+  const { mutateAsync: reorderBoardItems, isPending: isReorderingItems } = useReorderBoardItems();
   const { mutateAsync: updateBoardItem, isPending: isUpdatingItem } = useUpdateBoardItem();
   const { mutateAsync: replaceAssignments } = useReplaceBoardItemAssignments();
   const { mutateAsync: createKid, isPending: isCreatingKid } = useCreateKid();
@@ -108,6 +112,7 @@ export default function Home() {
     () => (items ?? []).filter((item) => item.type === "daily"),
     [items],
   );
+
   const weeklyItems = useMemo(
     () => (items ?? []).filter((item) => item.type === "weekly"),
     [items],
@@ -176,6 +181,18 @@ export default function Home() {
   const handleCreateItem = async (data: CreateBoardItemRequest) => {
     await createBoardItem(data);
     setIsEditorOpen(false);
+  };
+
+  const handleReorderItems = async (
+    type: "daily" | "weekly",
+    orderedItems: Array<{ itemKind: BoardItemKind; itemId: number }>,
+  ) => {
+    if (!selectedKidId) return;
+    await reorderBoardItems({
+      kidId: selectedKidId,
+      type,
+      orderedItems,
+    });
   };
 
   const handleCreateKid = async () => {
@@ -316,8 +333,9 @@ export default function Home() {
                 onOpenWeekPicker={() => setIsWeekPickerOpen(true)}
                 onPrint={handlePrint}
                 onToggle={handleToggle}
+                onReorderItems={handleReorderItems}
                 onEditItem={handleEditItem}
-                isPending={isToggling || isDeletingItem}
+                isPending={isToggling || isReorderingItems || isDeletingItem}
               />
             </section>
           </main>
@@ -351,7 +369,7 @@ export default function Home() {
               className="max-h-[24rem] px-5 py-4 sm:max-h-[28rem] xl:h-[var(--sidebar-list-height)] xl:min-h-0 xl:flex-none xl:max-h-[var(--sidebar-list-height)]"
               style={
                 tableHeight
-                  ? ({ ["--sidebar-list-height" as string]: `${tableHeight}px` } as React.CSSProperties)
+                  ? ({ ["--sidebar-list-height" as string]: `${tableHeight}px` } as CSSProperties)
                   : undefined
               }
             >

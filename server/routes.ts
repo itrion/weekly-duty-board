@@ -1,7 +1,7 @@
 
 import type { Express } from "express";
 import type { Server } from "http";
-import { AssignmentLimitError, storage } from "./storage";
+import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { boardItemKindSchema } from "@shared/schema";
 import { z } from "zod";
@@ -17,11 +17,6 @@ export async function registerRoutes(
       const createdItem = await storage.createBoardItem(input);
       res.status(201).json(createdItem);
     } catch (err) {
-      if (err instanceof AssignmentLimitError) {
-        return res.status(400).json({
-          message: `Límite alcanzado: ${err.cadence === "daily" ? "6 diarias" : "2 semanales"} por niño.`,
-        });
-      }
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors });
       }
@@ -99,15 +94,23 @@ export async function registerRoutes(
       }
       res.json(result);
     } catch (err) {
-      if (err instanceof AssignmentLimitError) {
-        return res.status(400).json({
-          message: `Límite alcanzado: ${err.cadence === "daily" ? "6 diarias" : "2 semanales"} por niño.`,
-        });
-      }
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors });
       }
       throw err;
+    }
+  });
+
+  app.post(api.board.reorder.path, async (req, res) => {
+    try {
+      const input = api.board.reorder.input.parse(req.body);
+      await storage.reorderBoardItems(input);
+      res.json({ ok: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors });
+      }
+      return res.status(400).json({ message: "Could not reorder board items" });
     }
   });
 

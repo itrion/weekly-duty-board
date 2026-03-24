@@ -17,6 +17,7 @@ coverage
 # Local environment files (keep template committed)
 .env.*
 !.env.example
+data/store.json
 
 # Local Codex runtime/state (contains auth and session data)
 .codex

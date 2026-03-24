@@ -4,15 +4,10 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "bootstrap": "node bootstrap/run.mjs",
-    "dev": "npm run bootstrap && NODE_ENV=development tsx server/index.ts",
+    "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
-    "start": "npm run bootstrap && NODE_ENV=production node dist/index.cjs",
-    "check": "tsc",
-    "db:migrate": "drizzle-kit migrate",
-    "db:up": "docker compose up -d db",
-    "db:down": "docker compose down",
-    "db:reset": "docker compose down -v && docker compose up -d db"
+    "start": "NODE_ENV=production node dist/index.cjs",
+    "check": "tsc"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

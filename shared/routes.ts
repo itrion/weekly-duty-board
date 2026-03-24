@@ -7,6 +7,7 @@ import {
   kids,
   boardItemKindSchema,
   createBoardItemSchema,
+  reorderBoardItemsSchema,
   updateBoardItemSchema,
   createKidSchema,
   updateKidSchema,
@@ -77,6 +78,16 @@ export const api = {
           itemKind: boardItemKindSchema,
           itemId: z.number(),
           kidIds: z.array(z.number()),
+        }),
+      },
+    },
+    reorder: {
+      method: 'POST' as const,
+      path: '/api/board-items/reorder' as const,
+      input: reorderBoardItemsSchema,
+      responses: {
+        200: z.object({
+          ok: z.literal(true),
         }),
       },
     },
