@@ -287,6 +287,7 @@ export interface IStorage {
   createBoardItem(data: CreateBoardItemRequest): Promise<Task | Routine>;
   getBoardItems(kidId?: number): Promise<BoardItemWithAssignments[]>;
   updateBoardItem(itemKind: BoardItemKind, itemId: number, data: UpdateBoardItemRequest): Promise<Task | Routine | null>;
+  deleteBoardItem(itemKind: BoardItemKind, itemId: number): Promise<boolean>;
   getKids(): Promise<Kid[]>;
   createKid(data: CreateKidRequest): Promise<Kid>;
   updateKid(kidId: number, data: UpdateKidRequest): Promise<Kid | null>;
@@ -540,6 +541,34 @@ export class JsonFileStorage implements IStorage {
       }
       await this.writeStoreToDisk(store);
       return structuredClone(routine);
+    });
+  }
+
+  async deleteBoardItem(itemKind: BoardItemKind, itemId: number): Promise<boolean> {
+    return this.runExclusive(async () => {
+      await this.ensureStoreLoaded();
+      const store = this.store!;
+
+      if (itemKind === "task") {
+        const originalLength = store.tasks.length;
+        store.tasks = store.tasks.filter((task) => task.id !== itemId);
+        if (store.tasks.length === originalLength) return false;
+
+        store.taskAssignments = store.taskAssignments.filter((assignment) => assignment.taskId !== itemId);
+        store.completions = store.completions.filter((completion) => completion.taskId !== itemId);
+      } else {
+        const originalLength = store.routines.length;
+        store.routines = store.routines.filter((routine) => routine.id !== itemId);
+        if (store.routines.length === originalLength) return false;
+
+        store.routineAssignments = store.routineAssignments.filter((assignment) => assignment.routineId !== itemId);
+        store.completions = store.completions.filter((completion) => completion.routineId !== itemId);
+      }
+
+      const normalized = normalizeStore(store);
+      this.store = normalized;
+      await this.writeStoreToDisk(normalized);
+      return true;
     });
   }
 

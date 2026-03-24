@@ -104,6 +104,28 @@ export function useCompletions(startDate: string, endDate: string) {
   });
 }
 
+export function useDeleteBoardItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itemKind, itemId }: { itemKind: BoardItemKind; itemId: number }) => {
+      const url = buildUrl(api.board.remove.path, { kind: itemKind, id: itemId });
+      const res = await fetch(url, {
+        method: api.board.remove.method,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error(await getErrorMessage(res, "No se pudo eliminar el elemento."));
+      }
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.board.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.completions.list.path] });
+    },
+  });
+}
+
 export function useUpdateBoardItem() {
   const queryClient = useQueryClient();
 

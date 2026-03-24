@@ -58,6 +58,27 @@ export async function registerRoutes(
     }
   });
 
+  app.delete(api.board.remove.path, async (req, res) => {
+    const itemId = Number(req.params.id);
+    if (!Number.isInteger(itemId) || itemId < 1) {
+      return res.status(400).json({ message: "Invalid board item id" });
+    }
+
+    try {
+      const itemKind = boardItemKindSchema.parse(req.params.kind);
+      const deleted = await storage.deleteBoardItem(itemKind, itemId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Board item not found" });
+      }
+      res.status(204).send();
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors });
+      }
+      throw err;
+    }
+  });
+
   app.put(api.board.replaceAssignments.path, async (req, res) => {
     const itemId = Number(req.params.id);
     if (!Number.isInteger(itemId) || itemId < 1) {
