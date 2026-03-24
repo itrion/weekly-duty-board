@@ -43,8 +43,10 @@ export default function Home() {
   const [editingItem, setEditingItem] = useState<BoardItemWithAssignments | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false);
+  const mainColumnRef = useRef<HTMLDivElement | null>(null);
   const tableSectionRef = useRef<HTMLElement | null>(null);
   const [tableHeight, setTableHeight] = useState<number | null>(null);
+  const [tableOffsetTop, setTableOffsetTop] = useState<number>(0);
 
   // Date calculations
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -73,19 +75,24 @@ export default function Home() {
   }, [kids, selectedKidId]);
 
   useEffect(() => {
+    const mainColumn = mainColumnRef.current;
     const tableSection = tableSectionRef.current;
-    if (!tableSection || typeof ResizeObserver === "undefined") return;
+    if (!mainColumn || !tableSection || typeof ResizeObserver === "undefined") return;
 
-    const syncTableHeight = () => {
-      setTableHeight(Math.round(tableSection.getBoundingClientRect().height));
+    const syncTableMetrics = () => {
+      const mainColumnRect = mainColumn.getBoundingClientRect();
+      const tableSectionRect = tableSection.getBoundingClientRect();
+      setTableHeight(Math.round(tableSectionRect.height));
+      setTableOffsetTop(Math.max(0, Math.round(tableSectionRect.top - mainColumnRect.top)));
     };
 
-    syncTableHeight();
+    syncTableMetrics();
 
     const resizeObserver = new ResizeObserver(() => {
-      syncTableHeight();
+      syncTableMetrics();
     });
 
+    resizeObserver.observe(mainColumn);
     resizeObserver.observe(tableSection);
     return () => resizeObserver.disconnect();
   }, [items, completions, kids, selectedKidId, currentDate]);
@@ -312,7 +319,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 print:pb-0">
       <div className="mx-auto grid w-full max-w-[1640px] gap-6 px-4 pt-4 sm:px-6 lg:px-8 xl:grid-cols-[minmax(400px,460px)_minmax(0,1fr)] xl:items-stretch print:block print:max-w-none print:px-0 print:pt-0">
-        <div className="order-1 print-page print-container min-w-0 xl:order-2">
+        <div ref={mainColumnRef} className="order-1 print-page print-container min-w-0 xl:order-2">
           <header className="mb-2 print:mb-1">
             <h1 className="text-xl md:text-2xl font-display font-bold text-primary uppercase tracking-wider print:text-lg">
               Tabla de tareas y rutinas
@@ -351,12 +358,22 @@ export default function Home() {
           </footer>
         </div>
 
-        <aside className="order-2 print:hidden xl:order-1 xl:min-h-0 xl:self-stretch">
+        <aside
+          className="order-2 print:hidden xl:order-1 xl:min-h-0 xl:self-stretch"
+          style={
+            tableOffsetTop > 0
+              ? ({ ["--sidebar-offset-top" as string]: `${tableOffsetTop}px` } as CSSProperties)
+              : undefined
+          }
+        >
           <div
             className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm xl:flex xl:h-[var(--sidebar-card-height)] xl:flex-col"
             style={
               tableHeight
-                ? ({ ["--sidebar-card-height" as string]: `${tableHeight}px` } as CSSProperties)
+                ? ({
+                    ["--sidebar-card-height" as string]: `${tableHeight}px`,
+                    marginTop: tableOffsetTop > 0 ? "var(--sidebar-offset-top)" : undefined,
+                  } as CSSProperties)
                 : undefined
             }
           >
