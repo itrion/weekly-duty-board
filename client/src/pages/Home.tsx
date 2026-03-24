@@ -54,6 +54,7 @@ export default function Home() {
 
   // Queries
   const { data: kids, isLoading: kidsLoading } = useKids();
+  const { data: allItems, isLoading: allItemsLoading } = useTasks();
   const { data: items, isLoading: itemsLoading } = useTasks(selectedKidId);
   const { data: completions } = useCompletions(startDateStr, endDateStr);
   const { mutate: toggleTask, isPending: isToggling } = useToggleCompletion();
@@ -108,14 +109,19 @@ export default function Home() {
     [kids, selectedKidId],
   );
 
+  const availableItems = useMemo(() => {
+    if (!selectedKidId) return [];
+    return (allItems ?? []).filter((item) => !item.kidIds.includes(selectedKidId));
+  }, [allItems, selectedKidId]);
+
   const dailyItems = useMemo(
-    () => (items ?? []).filter((item) => item.type === "daily"),
-    [items],
+    () => availableItems.filter((item) => item.type === "daily"),
+    [availableItems],
   );
 
   const weeklyItems = useMemo(
-    () => (items ?? []).filter((item) => item.type === "weekly"),
-    [items],
+    () => availableItems.filter((item) => item.type === "weekly"),
+    [availableItems],
   );
 
   const handlePrint = () => {
@@ -213,7 +219,7 @@ export default function Home() {
     await updateKid({ kidId, data: { name } });
   };
 
-  if (itemsLoading || kidsLoading) {
+  if (itemsLoading || allItemsLoading || kidsLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
@@ -346,7 +352,14 @@ export default function Home() {
         </div>
 
         <aside className="order-2 print:hidden xl:order-1 xl:min-h-0 xl:self-stretch">
-          <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm xl:flex xl:h-full xl:flex-col">
+          <div
+            className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm xl:flex xl:h-[var(--sidebar-card-height)] xl:flex-col"
+            style={
+              tableHeight
+                ? ({ ["--sidebar-card-height" as string]: `${tableHeight}px` } as CSSProperties)
+                : undefined
+            }
+          >
             <div className="border-b border-border/60 px-5 py-4">
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -355,7 +368,9 @@ export default function Home() {
                 <div>
                   <h2 className="text-base font-semibold">Lista de tareas</h2>
                   <p className="text-sm text-muted-foreground">
-                    {selectedKid ? `Gestiona las tareas de ${selectedKid.name}.` : "Selecciona un niño para gestionar sus tareas."}
+                    {selectedKid
+                      ? `Tareas disponibles para intercambiar con ${selectedKid.name}.`
+                      : "Selecciona un niño para ver tareas disponibles."}
                   </p>
                 </div>
               </div>
@@ -365,24 +380,21 @@ export default function Home() {
               </Button>
             </div>
 
-            <ScrollArea
-              className="max-h-[24rem] px-5 py-4 sm:max-h-[28rem] xl:h-[var(--sidebar-list-height)] xl:min-h-0 xl:flex-none xl:max-h-[var(--sidebar-list-height)]"
-              style={
-                tableHeight
-                  ? ({ ["--sidebar-list-height" as string]: `${tableHeight}px` } as CSSProperties)
-                  : undefined
-              }
-            >
+            <ScrollArea className="max-h-[24rem] px-5 py-4 sm:max-h-[28rem] xl:min-h-0 xl:flex-1 xl:max-h-none">
               <div className="space-y-6 pb-4">
                 {renderManagementSection(
                   "Diarias",
                   dailyItems,
-                  "No hay tareas ni rutinas diarias para este niño todavía.",
+                  selectedKid
+                    ? "No hay tareas diarias disponibles fuera de las ya asignadas."
+                    : "Selecciona un niño para ver tareas diarias disponibles.",
                 )}
                 {renderManagementSection(
                   "Semanales",
                   weeklyItems,
-                  "No hay tareas ni rutinas semanales para este niño todavía.",
+                  selectedKid
+                    ? "No hay tareas semanales disponibles fuera de las ya asignadas."
+                    : "Selecciona un niño para ver tareas semanales disponibles.",
                 )}
               </div>
             </ScrollArea>
